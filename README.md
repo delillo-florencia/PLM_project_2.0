@@ -8,7 +8,7 @@ Repository for the final project of the 02456 Deep Learning (Fall 2024) course a
 
 ## Repository outline
 ```
-PLM_PROJECT/
+PLM_PROJECT_2.0/
 │
 |
 ├── src/                                        # Main source code
