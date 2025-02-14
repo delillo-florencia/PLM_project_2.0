@@ -122,7 +122,7 @@ class DynamicTaxonIdSampler(Sampler):
         """
         super().__init__(None)
         self.num_replicas = num_replicas
-        self.rank = rank
+        self.rank = rank # FIX RANK TO AUTO-MODE
         self.seq_lengths = seq_lengths
         self.taxon_ids = taxon_ids
         self.num_buckets = num_buckets

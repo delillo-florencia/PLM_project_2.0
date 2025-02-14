@@ -6,8 +6,8 @@ import os
 
 
 # GLOBAL ENV
-RANK = int(os.environ.get("LOCAL_RANK", 0))
-DEVICES = torch.cuda.device_count()
+RANK = int(os.environ.get("RANK", 0))
+DEVICES = int(os.environ.get("WORLD_SIZE", 1))
 torch.set_float32_matmul_precision("medium")
 
 

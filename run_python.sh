@@ -7,6 +7,7 @@
 #SBATCH --job-name=get_reps_test
 #SBATCH --output=reps_output.txt
 
-python src/training/get_reps.py
+#python src/training/get_reps.py
+torchrun --standalone --nnodes=1 --nproc_per_node=4 src/training/get_reps.py
 
 hostname
