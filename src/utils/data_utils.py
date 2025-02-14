@@ -12,12 +12,12 @@ from esm import Alphabet
 class ModelSelector:
 
     MODEL_MAPPING = {
-        "8M":   {"model_name": "facebook/esm2_t6_8M_UR50D", "rep_layer": 6},
-        "35M":  {"model_name": "facebook/esm2_t12_35M_UR50D", "rep_layer": 12},
-        "150M": {"model_name": "facebook/esm2_t30_150M_UR50D", "rep_layer": 30},
-        "650M": {"model_name": "facebook/esm2_t33_650M_UR50D", "rep_layer": 33},
-        "3B":   {"model_name": "facebook/esm2_t36_3B_UR50D", "rep_layer": 36},
-        "15B":  {"model_name": "facebook/esm2_t48_15B_UR50D", "rep_layer": 48}}
+        "8M":   {"model_name": "facebook/esm2_t6_8M_UR50D"},
+        "35M":  {"model_name": "facebook/esm2_t12_35M_UR50D"},
+        "150M": {"model_name": "facebook/esm2_t30_150M_UR50D"},
+        "650M": {"model_name": "facebook/esm2_t33_650M_UR50D"},
+        "3B":   {"model_name": "facebook/esm2_t36_3B_UR50D"},
+        "15B":  {"model_name": "facebook/esm2_t48_15B_UR50D"}}
     
     def __init__(self, param_size: str):
         try:
@@ -25,7 +25,6 @@ class ModelSelector:
         except KeyError:
             raise ValueError(param_size)
         self.model = FAEsmForMaskedLM.from_pretrained(model_info["model_name"])
-        self.repr = model_info["rep_layer"]
         self.alphabet = Alphabet.from_architecture("ESM-1")
 
 
@@ -214,7 +213,7 @@ class DynamicTaxonIdSampler(Sampler):
     
 
 
-def get_seq_rep(results, batch_lens, layers):
+def get_seq_rep(results, batch_lens):
     """
     Get sequence representations from esm_compute
     """

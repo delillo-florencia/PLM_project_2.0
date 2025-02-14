@@ -48,7 +48,6 @@ class ProteinReprModule(pl.LightningModule):
         self.selector = ModelSelector(param_size)
         self.model = self.selector.model  
         self.alphabet = self.selector.alphabet
-        self.repr_layer = self.selector.repr
         self.output_dir = output_dir
         self.batch_converter = self.alphabet.get_batch_converter()
         self.device_type = torch.device("cuda")
@@ -63,7 +62,7 @@ class ProteinReprModule(pl.LightningModule):
         batch_lens = (batch_tokens != self.alphabet.padding_idx).sum(1)
         with torch.no_grad():
             results = self.model(batch_tokens)
-        rep = get_seq_rep(results, batch_lens, layers=self.repr_layer)
+        rep = get_seq_rep(results, batch_lens)
         return rep
 
     def test_step(self, batch, batch_idx):
