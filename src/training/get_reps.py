@@ -1,13 +1,13 @@
 import pytorch_lightning as pl
 from utils.pyl_utils import ProteinDataModule, ProteinReprModule
-
+import torch
 
 
 # MASTER PARAMS
 model_type = "8M"
-csv_file = '../../data/raw/uniprot_data_500k_sampled_250.csv'
-hash_file = '../../data/raw/uniprot_data_500k_sampled_250.hash'
-output_dir = "../../data/outputs/faesm_teacher_reps/"
+csv_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.csv'
+hash_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.hash'
+output_dir = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/faesm_teacher_reps/"
 
 # SAMPLER PARAMS
 sampler_params = {
@@ -17,6 +17,8 @@ sampler_params = {
     "max_batch_tokens": 2200,
     "shuffle": False}
 
+# TORCH FLAGS
+torch.set_float32_matmul_precision("medium")
 
 
 # init data module
@@ -31,6 +33,7 @@ trainer = pl.Trainer(
     devices=sampler_params["num_replicas"],
     accelerator="gpu",
     logger=False,
+    precision="bf16-true",
     max_epochs=1,
     limit_test_batches=1) # ONLY ONE BATCH FOR TESTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

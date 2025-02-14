@@ -71,7 +71,6 @@ class ProteinReprModule(pl.LightningModule):
         os.makedirs(self.output_dir, exist_ok=True)
         save_path = os.path.join(self.output_dir, f"batch_{batch_idx+1}_reps.pt")
         torch.save(rep, save_path)
-        self.log("saved_batch", batch_idx + 1)
         return rep
 
     def configure_optimizers(self):
