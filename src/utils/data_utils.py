@@ -218,7 +218,7 @@ def get_seq_rep(results, batch_lens, layers):
     """
     Get sequence representations from esm_compute
     """
-    token_representations = results["representations"][layers]
+    token_representations = results["last_hidden_state"]
 
     # Generate per-sequence representations via averaging
     sequence_representations = []
