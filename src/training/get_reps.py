@@ -1,6 +1,15 @@
 import pytorch_lightning as pl
 from utils.pyl_utils import ProteinDataModule, ProteinReprModule
 import torch
+import os
+
+
+
+# GLOBAL ENV
+RANK = int(os.environ.get("LOCAL_RANK", 0))
+DEVICES = torch.cuda.device_count()
+torch.set_float32_matmul_precision("medium")
+
 
 
 # MASTER PARAMS
@@ -11,14 +20,12 @@ output_dir = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outpu
 
 # SAMPLER PARAMS
 sampler_params = {
-    "num_replicas": 1,
-    "rank": 0,
+    "num_replicas": DEVICES,
+    "rank": RANK,
     "max_batch_size": None,
     "max_batch_tokens": 2200,
     "shuffle": False}
 
-# TORCH FLAGS
-torch.set_float32_matmul_precision("medium")
 
 
 # init data module
@@ -30,12 +37,13 @@ model_module = ProteinReprModule(param_size=model_type, output_dir=output_dir)
 
 # trainer
 trainer = pl.Trainer(
-    devices=sampler_params["num_replicas"],
+    devices=DEVICES,
     accelerator="gpu",
     logger=False,
     precision="bf16-true",
+    strategy="ddp",
     max_epochs=1,
-    limit_test_batches=1) # ONLY ONE BATCH FOR TESTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    limit_test_batches=4) # ONLY ONE BATCH FOR TESTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # run the inference as test
-trainer.test(model_module, dataloaders=data_module.dataloader())
+trainer.test(model_module, dataloaders=data_module.dataloader(), verbose=False)
