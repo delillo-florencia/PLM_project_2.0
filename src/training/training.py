@@ -11,10 +11,14 @@ from utils.pyl_utils import ProteinDataModule
 import csv
 
 class ProteinReprModule(pl.LightningModule):
-    def __init__(self, student_model, teacher_model, distillation_loss, alphabet, repr_layer, batch_size, output_dir):
+    def __init__(self, student_model_param, teacher_model_param, distillation_loss, alphabet, repr_layer, batch_size, output_dir):
         super().__init__()
-        self.student_model = student_model
-        self.teacher_model = teacher_model
+        self.selector_student = ModelSelector(student_model_param)
+        self.student_model = self.selector_student
+        self.selector_teacher = ModelSelector(teacher_model_param)
+        self.teacher_model = self.selector_teacher
+        self.alphabet = self.selector.alphabet
+        
         self.distillation_loss = distillation_loss
         self.alphabet = alphabet
         self.repr_layer = repr_layer
@@ -149,10 +153,10 @@ sampler_params = {
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
 
 print("data module fine")
-# Load student model
-model = ProteinReprModule(student_model=model_type_student, teacher_model=model_type_teacher,
+# Load  model
+model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
                                   distillation_loss=DistillationLoss(), alphabet=None, repr_layer=12,
-                                  output_dir=output_dir_student)
+                                  batch_size=None,output_dir=output_dir_student)
 print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
