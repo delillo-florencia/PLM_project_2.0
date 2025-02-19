@@ -65,3 +65,4 @@ def mask_batch(batch, batch_number, epoch):
         results.append((masked_seq, mask_indices.tolist()))
     
     return results
+
