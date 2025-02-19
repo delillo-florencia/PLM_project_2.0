@@ -4,8 +4,7 @@ import pytorch_lightning as pl
 from torch.nn.utils.rnn import pad_sequence
 from utils.loss_functions import DistillationLoss
 from tqdm import tqdm
-from utils.data_utils import  get_seq_rep, get_logits
-#from utils.pyl_utils import batch_converter
+from utils.data_utils import  get_seq_rep, get_logits, ModelSelector
 from utils.token_mask import *
 from utils.pyl_utils import ProteinDataModule
 import csv
@@ -57,9 +56,9 @@ class ProteinReprModule(pl.LightningModule):
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
         with torch.no_grad():
-            teacher_res = self.teacher_model(batch_tokens, repr_layers=[self.repr_layer], return_contacts=False)
+            teacher_res = self.teacher_model(batch_tokens)
 
-        student_res = self.student_model(batch_tokens, repr_layers=[self.repr_layer], return_contacts=False)
+        student_res = self.student_model(batch_tokens)
 
         #logits and representations
         teacher_logits = get_logits(teacher_res)
