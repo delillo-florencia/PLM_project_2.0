@@ -2,10 +2,11 @@ import os
 import torch
 import pytorch_lightning as pl
 from torch.nn.utils.rnn import pad_sequence
+from utils.loss_functions import DistillationLoss
 from tqdm import tqdm
-from utils.pyl_utils import DistillationLoss, get_seq_rep, get_logits, batch_converter
+from utils.pyl_utils import  get_seq_rep, get_logits, batch_converter
+from utils.token_mask import *
 from utils.pyl_utils import ProteinDataModule
-
 import csv
 
 class ProteinReprModule(pl.LightningModule):
@@ -18,7 +19,10 @@ class ProteinReprModule(pl.LightningModule):
         self.repr_layer = repr_layer
         self.batch_size = batch_size
         self.output_dir = output_dir
-
+        self.teacher_model.eval()
+        for param in self.teacher_model.parameters():
+             param.requires_grad = False
+    
     def forward(self, x):
         return self.student_model(x)
 
@@ -122,7 +126,7 @@ class ProteinReprModule(pl.LightningModule):
 RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
 LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
-
+print("Init ok")
 torch.set_float32_matmul_precision("medium")
 torch.cuda.set_device(LOCAL_RANK)
 DEVICES = torch.cuda.device_count()
@@ -143,17 +147,12 @@ sampler_params = {
 
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
 
-# Load teacher model
-teacher_model = torch.load(f"{output_dir_teacher}/teacher_model.pth")
-teacher_model.eval()
-for param in teacher_model.parameters():
-    param.requires_grad = False
-
+print("data module fine")
 # Load student model
 student_model = ProteinReprModule(student_model=model_type_student, teacher_model=teacher_model,
                                   distillation_loss=DistillationLoss(), alphabet=None, repr_layer=12,
                                   output_dir=output_dir_student)
-
+print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
     accelerator="gpu",
@@ -161,6 +160,6 @@ trainer = pl.Trainer(
     max_epochs=1,
     precision="bf16-mixed"
 )
-
+print("Trainer ok")
 trainer.fit(student_model, datamodule=data_module)
-
+print("Done")
