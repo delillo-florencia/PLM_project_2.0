@@ -4,7 +4,8 @@ import pytorch_lightning as pl
 from torch.nn.utils.rnn import pad_sequence
 from utils.loss_functions import DistillationLoss
 from tqdm import tqdm
-from utils.pyl_utils import  get_seq_rep, get_logits, batch_converter
+from utils.data_utils import  get_seq_rep, get_logits
+#from utils.pyl_utils import batch_converter
 from utils.token_mask import *
 from utils.pyl_utils import ProteinDataModule
 import csv
@@ -149,7 +150,7 @@ data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=
 
 print("data module fine")
 # Load student model
-student_model = ProteinReprModule(student_model=model_type_student, teacher_model=teacher_model,
+model = ProteinReprModule(student_model=model_type_student, teacher_model=model_type_teacher,
                                   distillation_loss=DistillationLoss(), alphabet=None, repr_layer=12,
                                   output_dir=output_dir_student)
 print("model ok--")
@@ -161,5 +162,5 @@ trainer = pl.Trainer(
     precision="bf16-mixed"
 )
 print("Trainer ok")
-trainer.fit(student_model, datamodule=data_module)
+trainer.fit(model, datamodule=data_module)
 print("Done")

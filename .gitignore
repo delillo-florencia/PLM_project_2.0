@@ -3,4 +3,5 @@ reps_output_tokens.txt
 reps_output.txt
 logi_output.txt
 train_output.txt
+training_output.txt
 src/utils/__pycache__/*
