@@ -3,6 +3,7 @@ import pickle
 import math
 import random
 import torch
+import numpy as np
 from torch.utils.data import Dataset, Sampler
 from faesm.esm import FAEsmForMaskedLM
 from esm import Alphabet
@@ -97,7 +98,7 @@ class HashedProteinDataset(Dataset):
 
 class DynamicTaxonIdSampler(Sampler):
     def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=128, min_len=0, max_len=1024,
-                 max_batch_tokens=None, max_batch_size=None, shuffle=False, seed=42, drop_last=False):
+                 max_batch_tokens=None, max_batch_size=None, shuffle=False, shuffle_batch_order=True, seed=42, drop_last=False):
         """
         A dynamic batch sampler supports DDP for robust training
         :param num_replicas: int
@@ -131,6 +132,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.max_batch_tokens = max_batch_tokens or float('inf')
         self.max_batch_size = (max_batch_size + 1) if max_batch_size is not None else float('inf')
         self.shuffle = shuffle
+        self.shuffle_batch_order = shuffle_batch_order
         self.seed = seed
         self.drop_last = drop_last
         self.__epoch = 0
@@ -199,6 +201,8 @@ class DynamicTaxonIdSampler(Sampler):
             if bucket['indices']:
                 batches.append(bucket['indices'])
 
+        # make sure the number of butches works for DDP
+        random.seed(self.seed + self.__epoch)
         per_gpu = math.ceil(len(batches) / self.num_replicas)
         total = per_gpu * self.num_replicas
         dummy = total - len(batches)
@@ -206,8 +210,13 @@ class DynamicTaxonIdSampler(Sampler):
             batches += random.sample(batches, dummy)
         else:
             batches += [random.choice(batches) for _ in range(dummy)]
-        if self.shuffle:
-            random.shuffle(batches)
+
+        # shuffle batch order
+        if self.shuffle_batch_order:
+            rng = np.random.default_rng(self.seed + self.__epoch)
+            permuted_order = rng.permutation(len(batches))
+            batches = [batches[i] for i in permuted_order]
+
         self.__per_gpu_batch_num = per_gpu
         return batches
     
