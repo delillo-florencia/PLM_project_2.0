@@ -225,3 +225,14 @@ def get_seq_rep(results, batch_lens):
         sequence_representations.append(token_representations[i, 1: tokens_len - 1].mean(0))
 
     return sequence_representations
+
+
+
+def get_logits(results):
+    """
+    Extracts logits from esm_compute
+    """
+    logits = results["logits"]  
+
+    return logits
+

@@ -67,9 +67,9 @@ class ProteinReprModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         rep = self.forward(batch)
-        os.makedirs(self.output_dir, exist_ok=True)
-        save_path = os.path.join(self.output_dir, f"batch_{batch_idx+1}_reps.pt")
-        torch.save(rep, save_path)
+        #os.makedirs(self.output_dir, exist_ok=True)
+        #save_path = os.path.join(self.output_dir, f"batch_{batch_idx+1}_reps.pt")
+        #torch.save(rep, save_path)
         return rep
 
     def configure_optimizers(self):
