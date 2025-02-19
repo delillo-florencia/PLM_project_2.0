@@ -6,19 +6,6 @@ import torch.nn.functional as functional
 
 mse_loss = nn.MSELoss()
 
-def pad_to_match(teacher_kernel, student_kernel):
-    """
-    Just a precaution function. It assures that tokens embeddings in both teacher and student
-    representations have the same shape. This will apply zero-padding the kernel with less dimensions.
-    """
-    rows = max(teacher_kernel.shape[0], student_kernel.shape[0])
-    cols = max(teacher_kernel.shape[1], student_kernel.shape[1])
-    new_teacher_kernel = functional.pad(teacher_kernel, (0, cols - teacher_kernel.shape[1], 
-                                                            0, rows - teacher_kernel.shape[0]))
-    new_student_kernel = functional.pad(student_kernel, (0, cols - student_kernel.shape[1], 
-                                                            0, rows - student_kernel.shape[0]))
-    return new_teacher_kernel, new_student_kernel
-
 
 def kernel_similarity_matrix(repr):
     """
@@ -32,17 +19,21 @@ def kernel_similarity_matrix(repr):
 
     return cosine_similarity_matrix
 
+
 def kernel_mse_alignment_loss(teacher_kernel, student_kernel):
     """
-    Calculates the MSE kernel alignment loss between teacher and student
+    Calculates the MSE kernel alignment loss between teacher and student,
+    excluding the diagonal elements of the cosine similarity matrix.
     """
-    teacher_matrix = torch.tensor(kernel_similarity_matrix(teacher_kernel))
-    student_matrix = torch.tensor(kernel_similarity_matrix(student_kernel))
+    teacher_matrix = kernel_similarity_matrix(teacher_kernel)
+    student_matrix = kernel_similarity_matrix(student_kernel)
 
-    if teacher_matrix.shape != student_matrix.shape:
-        teacher_matrix, student_matrix = pad_to_match(teacher_matrix, student_matrix)
+    # exclude the diagonal elements
+    mask = ~torch.eye(teacher_matrix.size(0), dtype=torch.bool)
+    teacher_non_diag = teacher_matrix[mask]
+    student_non_diag = student_matrix[mask]
 
-    return mse_loss(teacher_matrix, student_matrix)
+    return mse_loss(teacher_non_diag, student_non_diag)
 
 
 def logits_mse_loss(teacher_logits, student_logits):
