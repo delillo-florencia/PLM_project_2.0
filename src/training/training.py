@@ -22,11 +22,26 @@ class ProteinReprModule(pl.LightningModule):
     def forward(self, x):
         return self.student_model(x)
 
+
+
     def training_step(self, batch, batch_idx):
         sequences = [item['sequence'] for item in batch]
         names = [item['protein_id'] for item in batch]
 
-        batch_labels, batch_strs, batch_tokens = batch_converter(list(zip(names, sequences)))
+        #  masking (always happens)
+        masked_results = mask_batch(batch, batch_idx, self.current_epoch)
+        masked_sequences = [masked_seq for masked_seq, _ in masked_results]
+    
+        #save masked sequences
+        if self.save_masked_sequences:
+            masked_sequences_dir = os.path.join(self.output_dir, 'masked_sequences')
+            os.makedirs(masked_sequences_dir, exist_ok=True)
+            
+            with open(os.path.join(masked_sequences_dir, f"batch_{batch_idx}_masked_sequences.txt"), 'w') as f:
+                for seq in masked_sequences:
+                    f.write(seq + "\n")
+
+        batch_labels, batch_strs, batch_tokens = batch_converter(list(zip(names, masked_sequences)))
         batch_tokens = batch_tokens.to(self.device)
         batch_lens = (batch_tokens != self.alphabet.padding_idx).sum(1)
 
@@ -34,22 +49,42 @@ class ProteinReprModule(pl.LightningModule):
         self.teacher_model.eval()
         with torch.no_grad():
             teacher_res = self.teacher_model(batch_tokens, repr_layers=[self.repr_layer], return_contacts=False)
-            teacher_logits = get_logits(teacher_res)
-            teacher_reps = get_seq_rep(teacher_res, batch_lens, layer=self.repr_layer)
 
         student_res = self.student_model(batch_tokens, repr_layers=[self.repr_layer], return_contacts=False)
+
+        #logits and representations
+        teacher_logits = get_logits(teacher_res)
+        teacher_reps = get_seq_rep(teacher_res, batch_lens, layer=self.repr_layer)
         student_logits = get_logits(student_res)
         student_reps = get_seq_rep(student_res, batch_lens, layer=self.repr_layer)
 
-        loss, rep_loss, log_loss = self.distillation_loss(
-            teacher_reps, teacher_logits, student_reps, student_logits
-        )
+        # loss
+        loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
 
         self.log('train_loss', loss, prog_bar=True)
         self.log('train_rep_loss', rep_loss, prog_bar=True)
         self.log('train_log_loss', log_loss, prog_bar=True)
 
+        # Define output directories for saving logits and representations
+        teacher_logits_dir = os.path.join(self.output_dir, 'teacher_logits')
+        teacher_reps_dir = os.path.join(self.output_dir, 'teacher_reps')
+        student_logits_dir = os.path.join(self.output_dir, 'student_logits')
+        student_reps_dir = os.path.join(self.output_dir, 'student_reps')
+
+        # Ensure directories exist
+        os.makedirs(teacher_logits_dir, exist_ok=True)
+        os.makedirs(teacher_reps_dir, exist_ok=True)
+        os.makedirs(student_logits_dir, exist_ok=True)
+        os.makedirs(student_reps_dir, exist_ok=True)
+
+        # Save teacher logits, representations, student logits, and representations
+        torch.save(teacher_logits, os.path.join(teacher_logits_dir, f"batch_{batch_idx}_teacher_logits.pt"))
+        torch.save(teacher_reps, os.path.join(teacher_reps_dir, f"batch_{batch_idx}_teacher_reps.pt"))
+        torch.save(student_logits, os.path.join(student_logits_dir, f"batch_{batch_idx}_student_logits.pt"))
+        torch.save(student_reps, os.path.join(student_reps_dir, f"batch_{batch_idx}_student_reps.pt"))
+
         return {"loss": loss, "train_rep_loss": rep_loss, "train_log_loss": log_loss}
+
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.student_model.parameters(), lr=1e-4)
@@ -123,7 +158,7 @@ trainer = pl.Trainer(
     devices=DEVICES,
     accelerator="gpu",
     strategy="ddp",
-    max_epochs=50,
+    max_epochs=1,
     precision="bf16-mixed"
 )
 
