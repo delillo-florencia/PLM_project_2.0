@@ -92,9 +92,12 @@ class ProteinReprModule(pl.LightningModule):
         teacher_reps = get_seq_rep(teacher_res, batch_lens)  
         student_reps = get_seq_rep(student_res, batch_lens)
         print("reps ok")
-
-
+        print("-----------COMPARE BELOW ------------------")
+        print("unmasked dtype:", unmasked.dtype)
+        print("unmasked shape:", unmasked.shape)
         print("unmasked", len(unmasked_data), unmasked_data[0])
+        print("masked_tokens dtype:", masked_tokens.dtype)
+        print("masked_tokens shape:", masked_tokens.shape)
         print("masked", len(masked_data), masked_data[0])
 
         with torch.no_grad():
