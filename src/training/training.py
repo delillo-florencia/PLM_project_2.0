@@ -1,5 +1,4 @@
 import os
-os.environ("CUDA_LAUNCH_BLOCKING") = 1
 
 import torch
 import pytorch_lightning as pl
