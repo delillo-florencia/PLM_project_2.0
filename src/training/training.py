@@ -78,9 +78,7 @@ class ProteinReprModule(pl.LightningModule):
         masked_inputs = tokenizer(
             masked_sequences,
             return_tensors="pt",
-            padding=True,
-            truncation=True
-        )
+            padding=True)
         masked_tokens = {k: v.to(self.device) for k, v in masked_inputs.items()}
 
         # Use the tokenizer's pad token id instead of alphabet.padding_idx
@@ -96,9 +94,7 @@ class ProteinReprModule(pl.LightningModule):
         unmasked_inputs = tokenizer(
             unmasked_sequences,
             return_tensors="pt",
-            padding=True,
-            truncation=True
-        )
+            padding=True)
         unmasked_tokens = {k: v.to(self.device) for k, v in unmasked_inputs.items()}
         print("unmasked_tokens_ready")
 
