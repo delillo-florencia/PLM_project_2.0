@@ -1,4 +1,19 @@
 import numpy as np
+from torch.nn.utils.rnn import pad_sequence
+
+
+def extract_masked_logits(logits, masked_pos):
+    masked_logi = []
+    for i, positions in enumerate(masked_pos):
+        # Adjust positions to account for the <str> token by adding 1 to each position.
+        adjusted_positions = [pos + 1 for pos in positions]
+        # Extract logits for the masked positions in the i-th sample.
+        masked_logi.append(logits[i, adjusted_positions, :])
+    
+    # Pad and stack the list of tensors into a single tensor.
+    padded_logits = pad_sequence(masked_logi, batch_first=True, padding_value=0.0)
+    return padded_logits
+
 
 def mask_batch(batch, batch_number, epoch):
     """
