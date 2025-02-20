@@ -104,14 +104,14 @@ class ProteinReprModule(pl.LightningModule):
 
         print("-----------CHECK BELOW ------------------")
         
-        print("masked_tokens shape:", masked_tokens.shape)
+        #print("masked_tokens shape:", masked_tokens.shape)
         #print("masked_tokens sample:", masked_tokens[:5])  
 
         #print("Batch tokens:", batch_tokens)
         #print("Batch tokens shape:", batch_tokens.shape)
-        print("Valid token indices range: 0 to", len(self.alphabet.all_toks) - 1)
-        print("Unique token indices in masked_tokens:", masked_tokens.unique())
-        print("LEN Unique token indices in masked_tokens:", len(masked_tokens.unique()))
+        #print("Valid token indices range: 0 to", len(self.alphabet.all_toks) - 1)
+        #print("Unique token indices in masked_tokens:", masked_tokens.unique())
+        #print("LEN Unique token indices in masked_tokens:", len(masked_tokens.unique()))
 
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
@@ -127,11 +127,11 @@ class ProteinReprModule(pl.LightningModule):
         student_reps = get_seq_rep(student_res, batch_lens)
         print("reps ok")
         print("-----------COMPARE BELOW ------------------")
-        print("unmasked dtype:", unmasked_tokens.shape)
-        print("unmasked shape:", unmasked_tokens.shape)
+        #print("unmasked dtype:", unmasked_tokens.shape)
+        #print("unmasked shape:", unmasked_tokens.shape)
         #print("unmasked", len(unmasked_data), unmasked_data[0])
-        print("masked_tokens dtype:", masked_tokens.shape)
-        print("masked_tokens shape:", masked_tokens.shape)
+        #print("masked_tokens dtype:", masked_tokens.shape)
+       #print("masked_tokens shape:", masked_tokens.shape)
         #print("masked", len(masked_data), masked_data[0])
 
         with torch.no_grad():
