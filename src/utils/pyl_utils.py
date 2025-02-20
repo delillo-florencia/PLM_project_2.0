@@ -36,7 +36,7 @@ class ProteinDataModule(pl.LightningDataModule):
             shuffle=self.sampler_params.get('shuffle', False)
         )
         sampler.dataset = self.dataset
-        sampler.set_epoch(0)  # THIS MAKES EVERY EPOCH TO HAVE IDENTIDCAL BATCHES!!!!!!!!!!!!!!
+        #sampler.set_epoch(0)  # THIS MAKES EVERY EPOCH TO HAVE IDENTIDCAL BATCHES!!!!!!!!!!!!!!
         return DataLoader(self.dataset, batch_sampler=sampler, collate_fn=self.collate_fn, shuffle=False, num_workers=5)
 
 
