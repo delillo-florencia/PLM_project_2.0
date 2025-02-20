@@ -6,6 +6,7 @@ from tqdm import tqdm
 from utils.data_utils import  get_seq_rep, get_logits, ModelSelector
 from utils.token_mask import mask_batch, extract_masked_logits
 from utils.pyl_utils import ProteinDataModule
+from pytorch_lightning.callbacks import ModelCheckpoint
 import csv
 import logging
 logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for more output
@@ -200,20 +201,20 @@ class ProteinReprModule(pl.LightningModule):
                 writer.writerow(["epoch", "avg_loss", "avg_rep_loss", "avg_log_loss"])
             writer.writerow([self.current_epoch, avg_loss, avg_rep_loss, avg_log_loss])
 
-        if (self.current_epoch) % 5 == 0:
-            checkpoint_path = f"{self.output_dir}/checkpoint_epoch_{self.current_epoch}.ckpt"
-            torch.save({
-                "epoch": self.current_epoch,
-                "model_state_dict": self.student_model.state_dict(),
-                "optimizer_state_dict": self.optimizers().optimizer.state_dict(),
-            }, checkpoint_path)
-            print(f"Checkpoint saved at {checkpoint_path}")
+        # if (self.current_epoch) % 5 == 0:
+        #     checkpoint_path = f"{self.output_dir}/checkpoint_epoch_{self.current_epoch}.ckpt"
+        #     torch.save({
+        #         "epoch": self.current_epoch,
+        #         "model_state_dict": self.student_model.state_dict(),
+        #         "optimizer_state_dict": self.optimizers().optimizer.state_dict(),
+        #     }, checkpoint_path)
+        #     print(f"Checkpoint saved at {checkpoint_path}")
 
 class SetEpochCallback(pl.Callback):
    def on_train_epoch_start(self, trainer, pl_module):
        self.pl_module = pl_module
        train_loader = trainer.train_dataloader
-       train_loader.batch_sampler.set_epoch(trainer.current_epoch)
+       train_loader.batch_sampler.set_epoch(trainer.current_epoch)     
 
 # ---------------------- TRAINING ----------------------
 RANK = int(os.environ.get("SLURM_PROCID", 0))
@@ -238,19 +239,27 @@ teacher_logits_dir = os.path.join(output_dir, 'teacher_logits')
 teacher_reps_dir = os.path.join(output_dir, 'teacher_reps')
 student_logits_dir = os.path.join(output_dir, 'student_logits')
 student_reps_dir = os.path.join(output_dir, 'student_reps')
+checkpoints_dir = os.path.join(output_dir, 'outputs')
 
 # Ensure directories exist
 os.makedirs(teacher_logits_dir, exist_ok=True)
 os.makedirs(teacher_reps_dir, exist_ok=True)
 os.makedirs(student_logits_dir, exist_ok=True)
 os.makedirs(student_reps_dir, exist_ok=True)
+os.makedirs(checkpoints_dir, exist_ok=True)
+
+checkpoint_callback = ModelCheckpoint(
+    dirpath=checkpoints_dir,
+    filename="checkpoint_step_{step}",
+    every_n_train_steps=2)  
+
 sampler_params = {
     "num_replicas": DEVICES,
     "rank": RANK,
     "max_batch_tokens": 10000,
     "shuffle": False, # all samples before bucketing
     "shuffle_batch_order": True, # batch order after bucketing
-    "max_batch_num": 4, # max number of batches across all GPUs
+    "max_batch_num": None, # max number of batches across all GPUs
 }
 
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
@@ -271,8 +280,9 @@ trainer = pl.Trainer(
     enable_model_summary=True,
     use_distributed_sampler=False,
     precision="bf16-mixed",
-    callbacks=[SetEpochCallback()]
+    callbacks=[SetEpochCallback(), checkpoint_callback]
 )
+
 print(torch.cuda.is_bf16_supported())  # Check BF16 support
 print("Trainer ok")
 trainer.fit(model, train_dataloaders=data_module.dataloader())

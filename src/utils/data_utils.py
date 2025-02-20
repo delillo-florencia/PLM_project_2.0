@@ -224,6 +224,8 @@ class DynamicTaxonIdSampler(Sampler):
             batches = [batches[i] for i in permuted_order]
 
         # truncate the total number of batches to max_batch_num (total over all GPUs)
+        # THIS LOGIC IS INCORRECT, AFTER SHUFFLING ALL BATCHES THIS WILL GIVE COMPLETELY DIFFERENT BATCHES EACH EPOCH
+        # INTENTION WAS TO GIVE SHUFFLED BATCHES FROM THE WHOLE DATASET, AND EACH EPOCH SHUFFLE EXACTLY THE SAME SUBSET OF BATCHES
         if self.max_batch_num != float('inf'):
             total = (self.max_batch_num // self.num_replicas) * self.num_replicas
             batches = batches[:total]
