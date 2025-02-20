@@ -19,7 +19,8 @@ class ProteinDataModule(pl.LightningDataModule):
         self.sampler_params = sampler_params
         self.collate_fn = collate_fn
 
-    def setup(self):
+    def setup(self, stage=None):
+        self.stage = stage
         self.dataset = HashedProteinDataset(self.csv_file, self.hash_file)
 
     def dataloader(self):
