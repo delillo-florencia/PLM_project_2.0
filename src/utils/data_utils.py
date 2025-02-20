@@ -101,7 +101,7 @@ class HashedProteinDataset(Dataset):
 
 
 class DynamicTaxonIdSampler(Sampler):
-    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=128, min_len=0, max_len=1024,
+    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=128, min_len=0, max_len=1024, max_batch_num=None,
                  max_batch_tokens=None, max_batch_size=None, shuffle=False, shuffle_batch_order=True, seed=42, drop_last=False):
         """
         A dynamic batch sampler supports DDP for robust training
@@ -135,6 +135,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.max_len = max_len
         self.max_batch_tokens = max_batch_tokens or float('inf')
         self.max_batch_size = (max_batch_size + 1) if max_batch_size is not None else float('inf')
+        self.max_batch_num = max_batch_num if max_batch_num is not None else float('inf')
         self.shuffle = shuffle
         self.shuffle_batch_order = shuffle_batch_order
         self.seed = seed
@@ -172,6 +173,7 @@ class DynamicTaxonIdSampler(Sampler):
         buckets = {}  # key: (taxon_id, length_bucket)
 
         for idx in indices:
+
             length = self.seq_lengths[idx]
             taxon_id = self.taxon_ids[idx]
             if not (self.min_len <= length <= self.max_len):
@@ -221,9 +223,16 @@ class DynamicTaxonIdSampler(Sampler):
             permuted_order = rng.permutation(len(batches))
             batches = [batches[i] for i in permuted_order]
 
+        # truncate the total number of batches to max_batch_num (total over all GPUs)
+        if self.max_batch_num != float('inf'):
+            total = (self.max_batch_num // self.num_replicas) * self.num_replicas
+            batches = batches[:total]
+            per_gpu = total // self.num_replicas
+        else:
+            per_gpu = math.ceil(len(batches) / self.num_replicas)
+    
         self.__per_gpu_batch_num = per_gpu
         return batches
-    
 
 
 def get_seq_rep(results, batch_lens):

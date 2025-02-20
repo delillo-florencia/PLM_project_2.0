@@ -31,6 +31,8 @@ class ProteinDataModule(pl.LightningDataModule):
             taxon_ids=self.dataset.taxon_ids,
             max_batch_size=self.sampler_params.get('max_batch_size', None),
             max_batch_tokens=self.sampler_params.get('max_batch_tokens', None),
+            max_batch_num=self.sampler_params.get('max_batch_num', None),
+            shuffle_batch_order=self.sampler_params.get("shuffle_batch_order", True),
             shuffle=self.sampler_params.get('shuffle', False)
         )
         sampler.dataset = self.dataset

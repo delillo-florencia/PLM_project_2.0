@@ -210,7 +210,9 @@ sampler_params = {
     "num_replicas": DEVICES,
     "rank": RANK,
     "max_batch_tokens": 10000,
-    "shuffle": False
+    "shuffle": False, # all samples before bucketing
+    "shuffle_batch_order": True, # batch order after bucketing
+    "max_batch_num": 4, # max number of batches across all GPUs
 }
 
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
@@ -230,7 +232,6 @@ trainer = pl.Trainer(
     log_every_n_steps=1,
     enable_model_summary=True,
     use_distributed_sampler=False,
-    limit_test_batches=4,
     precision="bf16-mixed",
 #    callbacks=[SetEpochCallback()]
 )
