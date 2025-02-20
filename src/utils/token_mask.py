@@ -10,6 +10,8 @@ def extract_masked_logits(logits, masked_pos):
         # Adjust positions to account for the <str> token by adding 1 to each position.
         adjusted_positions = [pos + 1 for pos in positions]
         # Extract logits for the masked positions in the i-th sample.
+        print("Logits shape:", logits.shape)
+        print(f"Sample {i} - original positions: {positions}, adjusted: {adjusted_positions}")
         masked_logi.append(logits[i, adjusted_positions, :])
     print("to pad")
     # Pad and stack the list of tensors into a single tensor.

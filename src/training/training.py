@@ -94,6 +94,9 @@ class ProteinReprModule(pl.LightningModule):
         print("reps ok")
 
 
+        print("unmasked", len(unmasked_data), masked_data[0])
+        print("masked", len(masked_data), masked_data[0])
+
         with torch.no_grad():
             teacher_res = self.teacher_model(masked_tokens)
         print("teacher_resok")
