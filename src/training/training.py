@@ -1,4 +1,6 @@
 import os
+os.environ("CUDA_LAUNCH_BLOCKING") = 1
+
 import torch
 import pytorch_lightning as pl
 from utils.loss_functions import DistillationLoss
@@ -152,8 +154,7 @@ class ProteinReprModule(pl.LightningModule):
             print(f"Checkpoint saved at {checkpoint_path}")
 
 # ---------------------- TRAINING ----------------------
-
-RANK = int(os.environ.get("SLURM_PROCID", 0))
+  RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
 LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
 print("Init ok")
