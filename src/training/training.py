@@ -16,7 +16,7 @@ class ProteinReprModule(pl.LightningModule):
         self.student_model = self.selector_student
         self.selector_teacher = ModelSelector(teacher_model_param)
         self.teacher_model = self.selector_teacher
-        self.alphabet = self.selector.alphabet
+        self.alphabet = self.selector_teacher.alphabet
         self.batch_converter = self.alphabet.get_batch_converter()
         self.distillation_loss = distillation_loss
         self.output_dir = output_dir
@@ -180,6 +180,7 @@ trainer = pl.Trainer(
     accelerator="gpu",
     strategy="ddp",
     max_epochs=1,
+    limit_test_batches=1,
     precision="bf16-mixed"
 )
 print("Trainer ok")
