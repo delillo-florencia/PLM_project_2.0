@@ -21,6 +21,7 @@ class ProteinReprModule(pl.LightningModule):
         self.distillation_loss = distillation_loss
         self.output_dir = output_dir
         self.teacher_model.eval()
+        self.outputs = []
 
         for param in self.teacher_model.parameters():
              param.requires_grad = False
@@ -110,16 +111,19 @@ class ProteinReprModule(pl.LightningModule):
         torch.save(student_logits, os.path.join(student_logits_dir, f"batch_{batch_idx}_student_logits.pt"))
         torch.save(student_reps, os.path.join(student_reps_dir, f"batch_{batch_idx}_student_reps.pt"))
 
-        return {"loss": loss, "train_rep_loss": rep_loss, "train_log_loss": log_loss}
+        loss_dir = {"loss": loss, "train_rep_loss": rep_loss, "train_log_loss": log_loss}
+        self.outputs.append(loss_dir)
+        return loss
 
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.student_model.parameters(), lr=1e-4)
 
-    def on_training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x["loss"] for x in outputs]).mean().item()
-        avg_rep_loss = torch.stack([x["train_rep_loss"] for x in outputs]).mean().item()
-        avg_log_loss = torch.stack([x["train_log_loss"] for x in outputs]).mean().item()
+    def on_training_epoch_end(self):
+        avg_loss = torch.stack([x["loss"] for x in self.outputs]).mean().item()
+        avg_rep_loss = torch.stack([x["train_rep_loss"] for x in self.outputs]).mean().item()
+        avg_log_loss = torch.stack([x["train_log_loss"] for x in self.outputs]).mean().item()
+        self.outputs.clear()
 
         self.log("avg_loss", avg_loss)
         self.log("avg_rep_loss", avg_rep_loss)
