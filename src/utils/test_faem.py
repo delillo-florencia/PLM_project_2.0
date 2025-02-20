@@ -31,4 +31,4 @@ model = ModelSelector("8M").model
 mask_token = model.tokenizer.mask_token        
 mask_token_id = model.tokenizer.mask_token_id     
 
-print("mask_token", "mask_token_id")
+print(mask_token, mask_token_id)
