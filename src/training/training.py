@@ -38,7 +38,7 @@ class ProteinReprModule(pl.LightningModule):
         rep = self.forward(batch)
         return rep
 
-    def extract_masked_logits(logits, masked_pos):
+    def extract_masked_logits(self, logits, masked_pos):
         masked_logi = []
         for i, positions in enumerate(masked_pos):
             # Adjust positions to account for the <str> token by adding 1 to each position.
@@ -55,7 +55,7 @@ class ProteinReprModule(pl.LightningModule):
 
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
-        masked_sequences, masked_pos = zip(*masked_results)
+        masked_batch, masked_pos = zip(*masked_results)
     
         #save masked sequences
         if self.save_masked_sequences:
@@ -63,10 +63,10 @@ class ProteinReprModule(pl.LightningModule):
             os.makedirs(masked_sequences_dir, exist_ok=True)
             
             with open(os.path.join(masked_sequences_dir, f"batch_{batch_idx}_masked_sequences.txt"), 'w') as f:
-                for seq in masked_sequences:
-                    f.write(seq + "\n")
+                for sample in masked_batch:
+                    f.write(sample.masked_seq + "\n")
         
-        masked_data = [(sample.seq_id, masked_seq) for sample, masked_seq in zip(batch, masked_sequences)]
+        masked_data = [(sample.seq_id, sample.masked_seq) for sample in masked_batch]
         _, _, batch_tokens = self.batch_converter(masked_data)
         masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
         batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
@@ -158,7 +158,7 @@ RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
 LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
 print("Init ok")
-torch.set_float32_matmul_precision("medium")
+torch.set_float32_matmul_precision("high")
 torch.cuda.set_device(LOCAL_RANK)
 DEVICES = torch.cuda.device_count()
 

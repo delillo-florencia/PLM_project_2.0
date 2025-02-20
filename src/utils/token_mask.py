@@ -61,8 +61,8 @@ def mask_batch(batch, batch_number, epoch):
                 allowed = vocab[vocab != orig]
                 chain[idx] = rng.choice(allowed)
         
-        masked_seq = ''.join(chain.tolist())
-        results.append((masked_seq, mask_indices.tolist()))
+        seq_obj.add_masking(''.join(chain.tolist()))
+        results.append((seq_obj, tuple(mask_indices.tolist())))
     
     return results
 
