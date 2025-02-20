@@ -12,7 +12,7 @@ import logging
 logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for more output
 
 class ProteinReprModule(pl.LightningModule):
-    def __init__(self, student_model_param, teacher_model_param, distillation_loss, output_dir):
+    def __init__(self, student_model_param, teacher_model_param, distillation_loss, output_dir,save_masked_sequences):
         super().__init__()
         self.selector_student = ModelSelector(student_model_param)
         self.student_model = self.selector_student.model
@@ -23,6 +23,7 @@ class ProteinReprModule(pl.LightningModule):
         self.distillation_loss = distillation_loss
         self.output_dir = output_dir
         self.teacher_model.eval()
+        self.save_masked_sequences=save_masked_sequences
         self.outputs = []
 
         for param in self.teacher_model.parameters():
@@ -191,7 +192,7 @@ data_module.setup()
 print("data module fine")
 # Load  model
 model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
-                                  distillation_loss=DistillationLoss(),output_dir=output_dir)
+                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=True)
 print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
