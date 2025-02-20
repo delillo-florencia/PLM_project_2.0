@@ -166,10 +166,10 @@ output_dir = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outpu
 
 
 # Define output directories for saving logits and representations
-teacher_logits_dir = os.path.join(self.output_dir, 'teacher_logits')
-teacher_reps_dir = os.path.join(self.output_dir, 'teacher_reps')
-student_logits_dir = os.path.join(self.output_dir, 'student_logits')
-student_reps_dir = os.path.join(self.output_dir, 'student_reps')
+teacher_logits_dir = os.path.join(output_dir, 'teacher_logits')
+teacher_reps_dir = os.path.join(output_dir, 'teacher_reps')
+student_logits_dir = os.path.join(output_dir, 'student_logits')
+student_reps_dir = os.path.join(output_dir, 'student_reps')
 
 # Ensure directories exist
 os.makedirs(teacher_logits_dir, exist_ok=True)
