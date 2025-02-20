@@ -116,7 +116,7 @@ class ProteinReprModule(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.student_model.parameters(), lr=1e-4)
 
-    def training_epoch_end(self, outputs):
+    def on_training_epoch_end(self, outputs):
         avg_loss = torch.stack([x["loss"] for x in outputs]).mean().item()
         avg_rep_loss = torch.stack([x["train_rep_loss"] for x in outputs]).mean().item()
         avg_log_loss = torch.stack([x["train_log_loss"] for x in outputs]).mean().item()
