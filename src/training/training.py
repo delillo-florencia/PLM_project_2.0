@@ -154,7 +154,7 @@ class ProteinReprModule(pl.LightningModule):
             print(f"Checkpoint saved at {checkpoint_path}")
 
 # ---------------------- TRAINING ----------------------
-  RANK = int(os.environ.get("SLURM_PROCID", 0))
+RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
 LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
 print("Init ok")
