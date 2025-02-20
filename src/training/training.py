@@ -82,7 +82,7 @@ class ProteinReprModule(pl.LightningModule):
         masked_tokens = {k: v.to(self.device) for k, v in masked_inputs.items()}
 
         # Use the tokenizer's pad token id instead of alphabet.padding_idx
-        batch_lens = (masked_tokens != tokenizer.pad_token_id).sum(dim=1)
+        batch_lens = (masked_tokens["input_ids"] != tokenizer.pad_token_id).sum(dim=1)
         # Optionally, compute mask positions from the tokenized input:
         # This creates a boolean tensor that is True where the token is the mask token.
         masked_pos = (masked_inputs["input_ids"] == tokenizer.mask_token_id)
