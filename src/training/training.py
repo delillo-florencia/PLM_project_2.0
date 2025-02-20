@@ -81,6 +81,17 @@ class ProteinReprModule(pl.LightningModule):
         unmasked_tokens = unmasked_tokens.to(self.device)  # Unmasked tokens for representations
         print("unmasked_tokens_ready")
 
+        print("-----------CHECK BELOW ------------------")
+        print("masked_tokens dtype:", masked_tokens.dtype)
+        print("masked_tokens shape:", masked_tokens.shape)
+        print("masked_tokens sample:", masked_tokens[:5])  
+
+        print("Batch tokens:", batch_tokens)
+        print("Batch tokens shape:", batch_tokens.shape)
+        print("Valid token indices range: 0 to", len(self.alphabet.all_toks) - 1)
+        print("Unique token indices in masked_tokens:", masked_tokens.unique())
+        print("LEN Unique token indices in masked_tokens:", len(masked_tokens.unique()))
+
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
         with torch.no_grad():
