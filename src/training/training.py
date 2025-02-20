@@ -1,4 +1,5 @@
 import os
+os.environ["TORCH_USE_CUDA_DSA"] = "1"
 
 import torch
 import pytorch_lightning as pl
