@@ -28,6 +28,10 @@ class ProteinReprModule(pl.LightningModule):
     
     def forward(self, x):
         return self.student_model(x)
+    
+    def train_step(self, batch):
+        rep = self.forward(batch)
+        return rep
 
     def extract_masked_logits(logits, masked_pos):
         masked_logi = []
@@ -173,6 +177,7 @@ sampler_params = {
 }
 
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
+data_module.setup()
 
 print("data module fine")
 # Load  model
@@ -188,5 +193,5 @@ trainer = pl.Trainer(
     precision="bf16-mixed"
 )
 print("Trainer ok")
-trainer.fit(model, datamodule=data_module)
+trainer.fit(model, train_dataloader=data_module.dataloader())
 print("Done")
