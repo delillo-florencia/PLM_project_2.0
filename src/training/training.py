@@ -189,11 +189,11 @@ class ProteinReprModule(pl.LightningModule):
         #     }, checkpoint_path)
         #     print(f"Checkpoint saved at {checkpoint_path}")
 
-class SetEpochCallback(pl.Callback):
-   def on_train_epoch_start(self, trainer, pl_module):
-       self.pl_module = pl_module
-       train_loader = trainer.train_dataloader
-       train_loader.batch_sampler.set_epoch(trainer.current_epoch)     
+# class SetEpochCallback(pl.Callback):
+#    def on_train_epoch_start(self, trainer, pl_module):
+#        self.pl_module = pl_module
+#        train_loader = trainer.train_dataloader
+#        train_loader.batch_sampler.set_epoch(trainer.current_epoch)     
 
 # ---------------------- TRAINING ----------------------
 RANK = int(os.environ.get("SLURM_PROCID", 0))
@@ -259,7 +259,8 @@ trainer = pl.Trainer(
     enable_model_summary=True,
     use_distributed_sampler=False,
     precision="bf16-mixed",
-    callbacks=[SetEpochCallback(), checkpoint_callback]
+    callbacks=[checkpoint_callback]
+#   callbacks=[SetEpochCallback(), checkpoint_callback]
 )
 
 print(torch.cuda.is_bf16_supported())  # Check BF16 support
