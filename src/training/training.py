@@ -1,8 +1,8 @@
 import os
 import torch
 import pytorch_lightning as pl
-from torch.nn.utils.rnn import pad_sequence
 from utils.loss_functions import DistillationLoss
+from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
 from utils.data_utils import  get_seq_rep, get_logits, ModelSelector
 from utils.token_mask import *
@@ -10,35 +10,42 @@ from utils.pyl_utils import ProteinDataModule
 import csv
 
 class ProteinReprModule(pl.LightningModule):
-    def __init__(self, student_model_param, teacher_model_param, distillation_loss, alphabet, repr_layer, batch_size, output_dir):
+    def __init__(self, student_model_param, teacher_model_param, distillation_loss, output_dir):
         super().__init__()
         self.selector_student = ModelSelector(student_model_param)
         self.student_model = self.selector_student
         self.selector_teacher = ModelSelector(teacher_model_param)
         self.teacher_model = self.selector_teacher
         self.alphabet = self.selector.alphabet
-        
+        self.batch_converter = self.alphabet.get_batch_converter()
         self.distillation_loss = distillation_loss
-        self.alphabet = alphabet
-        self.repr_layer = repr_layer
-        self.batch_size = batch_size
         self.output_dir = output_dir
         self.teacher_model.eval()
+
         for param in self.teacher_model.parameters():
              param.requires_grad = False
     
     def forward(self, x):
         return self.student_model(x)
 
+    def extract_masked_logits(logits, masked_pos):
+        masked_logi = []
+        for i, positions in enumerate(masked_pos):
+            # Adjust positions to account for the <str> token by adding 1 to each position.
+            adjusted_positions = [pos + 1 for pos in positions]
+            # Extract logits for the masked positions in the i-th sample.
+            masked_logi.append(logits[i, adjusted_positions, :])
+        
+        # Pad and stack the list of tensors into a single tensor.
+        padded_logits = pad_sequence(masked_logi, batch_first=True, padding_value=0.0)
+        return padded_logits
 
 
     def training_step(self, batch, batch_idx):
-        sequences = [item['sequence'] for item in batch]
-        names = [item['protein_id'] for item in batch]
 
         #  masking (always happens)
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
-        masked_sequences = [masked_seq for masked_seq, _ in masked_results]
+        masked_sequences, masked_pos = zip(*masked_results)
     
         #save masked sequences
         if self.save_masked_sequences:
@@ -48,25 +55,37 @@ class ProteinReprModule(pl.LightningModule):
             with open(os.path.join(masked_sequences_dir, f"batch_{batch_idx}_masked_sequences.txt"), 'w') as f:
                 for seq in masked_sequences:
                     f.write(seq + "\n")
+        
+        masked_data = [(sample.seq_id, masked_seq) for sample, masked_seq in zip(batch, masked_sequences)]
+        _, _, batch_tokens = self.batch_converter(masked_data)
+        masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
+        batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
 
-        batch_labels, batch_strs, batch_tokens = batch_converter(list(zip(names, masked_sequences)))
-        batch_tokens = batch_tokens.to(self.device)
-        batch_lens = (batch_tokens != self.alphabet.padding_idx).sum(1)
+        unmasked_data = [(sample.seq_id, sample.sequence) for sample in batch]  # Get unmasked sequences
+        _, _, unmasked_tokens = self.batch_converter(unmasked_data)
+        unmasked_tokens = unmasked_tokens.to(self.device)  # Unmasked tokens for representations
 
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
         with torch.no_grad():
-            teacher_res = self.teacher_model(batch_tokens)
+            teacher_res = self.teacher_model(masked_tokens)
+            
+        student_res = self.student_model(masked_tokens)
+        
+        student_logits = get_logits(student_res)  
+        teacher_logits = get_logits(teacher_res)  
+        
+        with torch.no_grad():
+            teacher_res = self.teacher_model(unmasked_tokens)
+            
+        student_res = self.student_model(unmasked_tokens)
 
-        student_res = self.student_model(batch_tokens)
-
-        #logits and representations
-        teacher_logits = get_logits(teacher_res)
-        teacher_reps = get_seq_rep(teacher_res, batch_lens, layer=self.repr_layer)
-        student_logits = get_logits(student_res)
-        student_reps = get_seq_rep(student_res, batch_lens, layer=self.repr_layer)
+        teacher_reps = get_seq_rep(teacher_res, batch_lens)  
+        student_reps = get_seq_rep(student_res, batch_lens)
 
         # loss
+        student_logits = self.extract_masked_logits(student_logits, masked_pos)
+        teacher_logits = self.extract_masked_logits(teacher_logits, masked_pos)
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
 
         self.log('train_loss', loss, prog_bar=True)
@@ -154,8 +173,7 @@ data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=
 print("data module fine")
 # Load  model
 model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
-                                  distillation_loss=DistillationLoss(), alphabet=None, repr_layer=12,
-                                  batch_size=None,output_dir=output_dir_student)
+                                  distillation_loss=DistillationLoss(),output_dir=output_dir_student)
 print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
