@@ -8,6 +8,8 @@ from utils.data_utils import  get_seq_rep, get_logits, ModelSelector
 from utils.token_mask import *
 from utils.pyl_utils import ProteinDataModule
 import csv
+import logging
+logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for more output
 
 class ProteinReprModule(pl.LightningModule):
     def __init__(self, student_model_param, teacher_model_param, distillation_loss, output_dir):
@@ -197,6 +199,7 @@ trainer = pl.Trainer(
     strategy="ddp",
     max_epochs=1,
     enable_progress_bar=True,  
+    log_every_n_steps=1,
     enable_model_summary=True,
     limit_test_batches=1,
     precision="bf16-mixed"
