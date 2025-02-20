@@ -178,7 +178,10 @@ class ProteinReprModule(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.student_model.parameters(), lr=1e-4)
 
-    def on_training_epoch_end(self):
+
+
+    def on_train_epoch_end(self):
+        print("Calculating metrics...")
         avg_loss = torch.stack([x["loss"] for x in self.outputs]).mean().item()
         avg_rep_loss = torch.stack([x["train_rep_loss"] for x in self.outputs]).mean().item()
         avg_log_loss = torch.stack([x["train_log_loss"] for x in self.outputs]).mean().item()
@@ -197,7 +200,6 @@ class ProteinReprModule(pl.LightningModule):
                 writer.writerow(["epoch", "avg_loss", "avg_rep_loss", "avg_log_loss"])
             writer.writerow([self.current_epoch, avg_loss, avg_rep_loss, avg_log_loss])
 
-    def on_train_epoch_end(self):
         if (self.current_epoch) % 5 == 0:
             checkpoint_path = f"{self.output_dir}/checkpoint_epoch_{self.current_epoch}.ckpt"
             torch.save({
