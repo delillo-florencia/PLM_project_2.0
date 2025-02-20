@@ -13,9 +13,9 @@ class ProteinReprModule(pl.LightningModule):
     def __init__(self, student_model_param, teacher_model_param, distillation_loss, output_dir):
         super().__init__()
         self.selector_student = ModelSelector(student_model_param)
-        self.student_model = self.selector_student
+        self.student_model = self.selector_student.model
         self.selector_teacher = ModelSelector(teacher_model_param)
-        self.teacher_model = self.selector_teacher
+        self.teacher_model = self.selector_teacher.model
         self.alphabet = self.selector_teacher.alphabet
         self.batch_converter = self.alphabet.get_batch_converter()
         self.distillation_loss = distillation_loss
