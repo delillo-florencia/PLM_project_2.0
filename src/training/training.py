@@ -94,7 +94,7 @@ class ProteinReprModule(pl.LightningModule):
         print("reps ok")
 
 
-        print("unmasked", len(unmasked_data), masked_data[0])
+        print("unmasked", len(unmasked_data), unmasked_data[0])
         print("masked", len(masked_data), masked_data[0])
 
         with torch.no_grad():
