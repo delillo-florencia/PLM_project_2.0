@@ -94,26 +94,30 @@ class ProteinReprModule(pl.LightningModule):
 
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
-        with torch.no_grad():
-            teacher_res = self.teacher_model(masked_tokens)
-        print("teacher_resok")
-            
-        student_res = self.student_model(masked_tokens)
-        print("student_resok")
 
-        
-        student_logits = get_logits(student_res)  
-        teacher_logits = get_logits(teacher_res)  
-        print("getting_logits done")
 
         with torch.no_grad():
             teacher_res = self.teacher_model(unmasked_tokens)
+        print("teacher_resok")
             
         student_res = self.student_model(unmasked_tokens)
         print("teacher and student res ok")
         teacher_reps = get_seq_rep(teacher_res, batch_lens)  
         student_reps = get_seq_rep(student_res, batch_lens)
         print("reps ok")
+
+
+        with torch.no_grad():
+            teacher_res = self.teacher_model(masked_tokens)
+        print("teacher_resok")
+            
+        student_res = self.student_model(masked_tokens)
+        print("student_resok")
+        student_logits = get_logits(student_res)  
+        teacher_logits = get_logits(teacher_res)  
+        print("getting_logits done")
+
+
         # loss
         student_logits = self.extract_masked_logits(student_logits, masked_pos)
         teacher_logits = self.extract_masked_logits(teacher_logits, masked_pos)
@@ -178,7 +182,8 @@ class ProteinReprModule(pl.LightningModule):
 
 # DONT REMOVE PLS - ENSURE SET_EPOCH IS SET FOR EACH BATCH - REMOVE SET EPOCH FROM DATAMODULE
 #class SetEpochCallback(pl.Callback):
-#    def on_train_epoch_start(self, trainer):
+#    def on_train_epoch_start(self, trainer, pl_module):
+#        self.pl_module = pl_module
 #        train_loader = trainer.train_dataloader
 #        train_loader.batch_sampler.set_epoch(trainer.current_epoch)
 
