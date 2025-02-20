@@ -2,10 +2,9 @@ import os
 import torch
 import pytorch_lightning as pl
 from utils.loss_functions import DistillationLoss
-from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
 from utils.data_utils import  get_seq_rep, get_logits, ModelSelector
-from utils.token_mask import *
+from utils.token_mask import mask_batch, extract_masked_logits
 from utils.pyl_utils import ProteinDataModule
 import csv
 import logging
@@ -37,18 +36,6 @@ class ProteinReprModule(pl.LightningModule):
     def train_step(self, batch):
         rep = self.forward(batch)
         return rep
-
-    def extract_masked_logits(self, logits, masked_pos):
-        masked_logi = []
-        for i, positions in enumerate(masked_pos):
-            # Adjust positions to account for the <str> token by adding 1 to each position.
-            adjusted_positions = [pos + 1 for pos in positions]
-            # Extract logits for the masked positions in the i-th sample.
-            masked_logi.append(logits[i, adjusted_positions, :])
-        
-        # Pad and stack the list of tensors into a single tensor.
-        padded_logits = pad_sequence(masked_logi, batch_first=True, padding_value=0.0)
-        return padded_logits
 
 
     def training_step(self, batch, batch_idx):
@@ -119,8 +106,8 @@ class ProteinReprModule(pl.LightningModule):
 
 
         # loss
-        student_logits = self.extract_masked_logits(student_logits, masked_pos)
-        teacher_logits = self.extract_masked_logits(teacher_logits, masked_pos)
+        student_logits = extract_masked_logits(student_logits, masked_pos)
+        teacher_logits = extract_masked_logits(teacher_logits, masked_pos)
         print("logits masked positions ok")
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
         print("LOSS OKKKK ok")
