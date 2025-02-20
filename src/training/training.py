@@ -1,6 +1,4 @@
 import os
-os.environ["TORCH_USE_CUDA_DSA"] = "1"
-
 import torch
 import pytorch_lightning as pl
 from utils.loss_functions import DistillationLoss
@@ -12,6 +10,8 @@ from utils.pyl_utils import ProteinDataModule
 import csv
 import logging
 logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for more output
+
+
 
 class ProteinReprModule(pl.LightningModule):
     def __init__(self, student_model_param, teacher_model_param, distillation_loss, output_dir,save_masked_sequences):
@@ -74,34 +74,41 @@ class ProteinReprModule(pl.LightningModule):
         masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
         batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
 
-        print()
+        print("masked_tokens_ready")
 
         unmasked_data = [(sample.seq_id, sample.sequence) for sample in batch]  # Get unmasked sequences
         _, _, unmasked_tokens = self.batch_converter(unmasked_data)
         unmasked_tokens = unmasked_tokens.to(self.device)  # Unmasked tokens for representations
+        print("unmasked_tokens_ready")
 
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
         with torch.no_grad():
             teacher_res = self.teacher_model(masked_tokens)
+        print("teacher_resok")
             
         student_res = self.student_model(masked_tokens)
+        print("student_resok")
+
         
         student_logits = get_logits(student_res)  
         teacher_logits = get_logits(teacher_res)  
-        
+        print("getting_logits done")
+
         with torch.no_grad():
             teacher_res = self.teacher_model(unmasked_tokens)
             
         student_res = self.student_model(unmasked_tokens)
-
+        print("teacher and student res ok")
         teacher_reps = get_seq_rep(teacher_res, batch_lens)  
         student_reps = get_seq_rep(student_res, batch_lens)
-
+        print("reps ok")
         # loss
         student_logits = self.extract_masked_logits(student_logits, masked_pos)
         teacher_logits = self.extract_masked_logits(teacher_logits, masked_pos)
+        print("logits masked positions ok")
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
+        print("LOSS OKKKK ok")
 
         self.log('train_loss', loss, prog_bar=True)
         self.log('train_rep_loss', rep_loss, prog_bar=True)
@@ -114,7 +121,7 @@ class ProteinReprModule(pl.LightningModule):
         student_reps_dir = os.path.join(self.output_dir, 'student_reps')
 
 
-
+        print("saving")
         # Save teacher logits, representations, student logits, and representations
         torch.save(teacher_logits, os.path.join(teacher_logits_dir, f"batch_{batch_idx}_teacher_logits.pt"))
         torch.save(teacher_reps, os.path.join(teacher_reps_dir, f"batch_{batch_idx}_teacher_reps.pt"))
@@ -200,7 +207,7 @@ data_module.setup()
 print("data module fine")
 # Load  model
 model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
-                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=True)
+                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=False)
 print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
@@ -214,6 +221,7 @@ trainer = pl.Trainer(
     limit_test_batches=1,
     precision="bf16-mixed"
 )
+print(torch.cuda.is_bf16_supported())  # Check BF16 support
 print("Trainer ok")
 trainer.fit(model, train_dataloaders=data_module.dataloader())
 print("Done")
