@@ -48,7 +48,7 @@ class ProteinReprModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        #  masking (always happens)
+        #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
         masked_sequences, masked_pos = zip(*masked_results)
     
@@ -103,11 +103,7 @@ class ProteinReprModule(pl.LightningModule):
         student_logits_dir = os.path.join(self.output_dir, 'student_logits')
         student_reps_dir = os.path.join(self.output_dir, 'student_reps')
 
-        # Ensure directories exist
-        os.makedirs(teacher_logits_dir, exist_ok=True)
-        os.makedirs(teacher_reps_dir, exist_ok=True)
-        os.makedirs(student_logits_dir, exist_ok=True)
-        os.makedirs(student_reps_dir, exist_ok=True)
+
 
         # Save teacher logits, representations, student logits, and representations
         torch.save(teacher_logits, os.path.join(teacher_logits_dir, f"batch_{batch_idx}_teacher_logits.pt"))
@@ -166,9 +162,20 @@ model_type_student = "8M"
 model_type_teacher = "650M"
 csv_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.csv"
 hash_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.hash"
-output_dir_teacher = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/faesm_teacher_reps_teacher/"
-output_dir_student = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/faesm_teacher_reps_student/"
+output_dir = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/"
 
+
+# Define output directories for saving logits and representations
+teacher_logits_dir = os.path.join(self.output_dir, 'teacher_logits')
+teacher_reps_dir = os.path.join(self.output_dir, 'teacher_reps')
+student_logits_dir = os.path.join(self.output_dir, 'student_logits')
+student_reps_dir = os.path.join(self.output_dir, 'student_reps')
+
+# Ensure directories exist
+os.makedirs(teacher_logits_dir, exist_ok=True)
+os.makedirs(teacher_reps_dir, exist_ok=True)
+os.makedirs(student_logits_dir, exist_ok=True)
+os.makedirs(student_reps_dir, exist_ok=True)
 sampler_params = {
     "num_replicas": DEVICES,
     "rank": RANK,
@@ -182,13 +189,15 @@ data_module.setup()
 print("data module fine")
 # Load  model
 model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
-                                  distillation_loss=DistillationLoss(),output_dir=output_dir_student)
+                                  distillation_loss=DistillationLoss(),output_dir=output_dir)
 print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
     accelerator="gpu",
     strategy="ddp",
     max_epochs=1,
+    enable_progress_bar=True,  
+    enable_model_summary=True,
     limit_test_batches=1,
     precision="bf16-mixed"
 )
