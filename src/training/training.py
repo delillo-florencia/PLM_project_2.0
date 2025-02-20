@@ -247,7 +247,7 @@ data_module.setup()
 print("data module fine")
 # Load  model
 model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
-                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=False)
+                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=True)
 print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
