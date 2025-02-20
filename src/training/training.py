@@ -44,7 +44,7 @@ class ProteinReprModule(pl.LightningModule):
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
         masked_batch, masked_pos = zip(*masked_results)
-        print("masking done")
+        #print("masking done")
     
         #save masked sequences
         if self.save_masked_sequences:
@@ -55,7 +55,7 @@ class ProteinReprModule(pl.LightningModule):
                 for sample in masked_batch:
                     f.write(sample.masked_seq + "\n")
 
-            print("masked seq save")
+           # print("masked seq save")
         
 
         #######################
@@ -76,7 +76,7 @@ class ProteinReprModule(pl.LightningModule):
         # This creates a boolean tensor that is True where the token is the mask token.
         masked_pos = (masked_inputs["input_ids"] == tokenizer.mask_token_id)
 
-        print("masked_tokens_ready")
+        #print("masked_tokens_ready")
 
         # For unmasked sequences
         unmasked_sequences = [sample.sequence for sample in batch]
@@ -85,7 +85,7 @@ class ProteinReprModule(pl.LightningModule):
             return_tensors="pt",
             padding=True)
         unmasked_tokens = {k: v.to(self.device) for k, v in unmasked_inputs.items()}
-        print("unmasked_tokens_ready")
+        #print("unmasked_tokens_ready")
 
 
         ###############
@@ -97,32 +97,32 @@ class ProteinReprModule(pl.LightningModule):
 
         with torch.no_grad():
             teacher_res = self.teacher_model(**unmasked_tokens)
-        print("teacher_resok")
+        #print("teacher_resok")
             
         student_res = self.student_model(**unmasked_tokens)
-        print("teacher and student res ok")
+        #print("teacher and student res ok")
         teacher_reps = get_seq_rep(teacher_res, batch_lens)  
         student_reps = get_seq_rep(student_res, batch_lens)
-        print("reps ok")
+        #print("reps ok")
 
 
         with torch.no_grad():
             teacher_res = self.teacher_model(**masked_tokens)
-        print("teacher_resok")
+        #print("teacher_resok")
             
         student_res = self.student_model(**masked_tokens)
-        print("student_resok")
+        #print("student_resok")
         student_logits = get_logits(student_res)  
         teacher_logits = get_logits(teacher_res)  
-        print("getting_logits done")
+        #print("getting_logits done")
 
 
         # loss
         student_logits = extract_masked_logits(student_logits, masked_pos)
         teacher_logits = extract_masked_logits(teacher_logits, masked_pos)
-        print("logits masked positions ok")
+        #print("logits masked positions ok")
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
-        print("LOSS OKKKK ok")
+        #print("LOSS OKKKK ok")
 
 
         # Define output directories for saving logits and representations
@@ -132,7 +132,7 @@ class ProteinReprModule(pl.LightningModule):
         student_reps_dir = os.path.join(self.output_dir, 'student_reps')
 
 
-        print("saving")
+        #print("saving")
         # Save teacher logits, representations, student logits, and representations
         torch.save(teacher_logits, os.path.join(teacher_logits_dir, f"batch_{batch_idx}_teacher_logits.pt"))
         torch.save(teacher_reps, os.path.join(teacher_reps_dir, f"batch_{batch_idx}_teacher_reps.pt"))
@@ -199,17 +199,17 @@ class ProteinReprModule(pl.LightningModule):
 RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
 LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
-print("Init ok")
+#print("Init ok")
 torch.set_float32_matmul_precision("high")
 torch.cuda.set_device(LOCAL_RANK)
 DEVICES = torch.cuda.device_count()
 
 model_type_student = "8M"
 model_type_teacher = "650M"
-#csv_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.csv"
-#hash_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.hash"
-csv_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.csv'
-hash_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.hash'
+csv_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.csv"
+hash_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.hash"
+#csv_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.csv'
+#hash_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.hash'
 output_dir = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/"
 
 
@@ -230,7 +230,7 @@ os.makedirs(checkpoints_dir, exist_ok=True)
 checkpoint_callback = ModelCheckpoint(
     dirpath=checkpoints_dir,
     filename="checkpoint_step_{step}",
-    every_n_train_steps=2)  
+    every_n_train_steps=2000)  
 
 sampler_params = {
     "num_replicas": DEVICES,
@@ -238,17 +238,17 @@ sampler_params = {
     "max_batch_tokens": 10000,
     "shuffle": False, # all samples before bucketing
     "shuffle_batch_order": True, # batch order after bucketing
-    "max_batch_num": 8, # max number of batches across all GPUs
+    "max_batch_num": None, # max number of batches across all GPUs
 }
 
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
 data_module.setup()
 
-print("data module fine")
+#print("data module fine")
 # Load  model
 model = ProteinReprModule(student_model_param=model_type_student, teacher_model_param=model_type_teacher,
-                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=True)
-print("model ok--")
+                                  distillation_loss=DistillationLoss(),output_dir=output_dir,save_masked_sequences=False)
+#print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
     accelerator="gpu",
