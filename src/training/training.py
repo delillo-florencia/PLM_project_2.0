@@ -164,8 +164,10 @@ DEVICES = torch.cuda.device_count()
 
 model_type_student = "8M"
 model_type_teacher = "650M"
-csv_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.csv"
-hash_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.hash"
+#csv_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.csv"
+#hash_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/final_uniref100.hash"
+csv_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.csv'
+hash_file = '/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/uniprot_data_500k_sampled_250.hash'
 output_dir = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/"
 
 
