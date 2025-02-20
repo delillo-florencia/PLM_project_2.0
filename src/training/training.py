@@ -84,9 +84,9 @@ class ProteinReprModule(pl.LightningModule):
         print("-----------CHECK BELOW ------------------")
         print("masked_tokens dtype:", masked_tokens.dtype)
         print("masked_tokens shape:", masked_tokens.shape)
-        print("masked_tokens sample:", masked_tokens[:5])  
+        #print("masked_tokens sample:", masked_tokens[:5])  
 
-        print("Batch tokens:", batch_tokens)
+        #print("Batch tokens:", batch_tokens)
         print("Batch tokens shape:", batch_tokens.shape)
         print("Valid token indices range: 0 to", len(self.alphabet.all_toks) - 1)
         print("Unique token indices in masked_tokens:", masked_tokens.unique())
@@ -176,6 +176,12 @@ class ProteinReprModule(pl.LightningModule):
             }, checkpoint_path)
             print(f"Checkpoint saved at {checkpoint_path}")
 
+# DONT REMOVE PLS - ENSURE SET_EPOCH IS SET FOR EACH BATCH - REMOVE SET EPOCH FROM DATAMODULE
+#class SetEpochCallback(pl.Callback):
+#    def on_train_epoch_start(self, trainer):
+#        train_loader = trainer.train_dataloader
+#        train_loader.batch_sampler.set_epoch(trainer.current_epoch)
+
 # ---------------------- TRAINING ----------------------
 RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
@@ -229,8 +235,9 @@ trainer = pl.Trainer(
     log_every_n_steps=1,
     enable_model_summary=True,
     use_distributed_sampler=False,
-    limit_test_batches=1,
-    precision="bf16-mixed"
+    limit_test_batches=4,
+    precision="bf16-mixed",
+#    callbacks=[SetEpochCallback()]
 )
 print(torch.cuda.is_bf16_supported())  # Check BF16 support
 print("Trainer ok")
