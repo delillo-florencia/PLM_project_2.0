@@ -201,6 +201,7 @@ trainer = pl.Trainer(
     enable_progress_bar=True,  
     log_every_n_steps=1,
     enable_model_summary=True,
+    use_distributed_sampler=False,
     limit_test_batches=1,
     precision="bf16-mixed"
 )
