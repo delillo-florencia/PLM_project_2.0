@@ -56,17 +56,55 @@ class ProteinReprModule(pl.LightningModule):
 
         print("masked seq save")
         
-        masked_data = [(sample.seq_id, sample.masked_seq) for sample in masked_batch]
-        _, _, batch_tokens = self.batch_converter(masked_data)
-        masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
-        batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
+        # masked_data = [(sample.seq_id, sample.masked_seq) for sample in masked_batch]
+        # _, _, batch_tokens = self.batch_converter(masked_data)
+        # masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
+        # batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
+
+        # print("masked_tokens_ready")
+
+        # unmasked_data = [(sample.seq_id, sample.sequence) for sample in batch]  # Get unmasked sequences
+        # _, _, unmasked_tokens = self.batch_converter(unmasked_data)
+        # unmasked_tokens = unmasked_tokens.to(self.device)  # Unmasked tokens for representations
+        # print("unmasked_tokens_ready")
+
+
+        #######################
+
+        tokenizer = self.teacher_model.tokenizer
+
+        # For masked sequences
+        masked_sequences = [sample.masked_seq for sample in masked_batch]
+        masked_inputs = tokenizer(
+            masked_sequences,
+            return_tensors="pt",
+            padding=True,
+            truncation=True
+        )
+        masked_tokens = {k: v.to(self.device) for k, v in masked_inputs.items()}
+
+        # Use the tokenizer's pad token id instead of alphabet.padding_idx
+        batch_lens = (masked_tokens != tokenizer.pad_token_id).sum(dim=1)
+        # Optionally, compute mask positions from the tokenized input:
+        # This creates a boolean tensor that is True where the token is the mask token.
+        masked_pos = (masked_inputs["input_ids"] == tokenizer.mask_token_id)
 
         print("masked_tokens_ready")
 
-        unmasked_data = [(sample.seq_id, sample.sequence) for sample in batch]  # Get unmasked sequences
-        _, _, unmasked_tokens = self.batch_converter(unmasked_data)
-        unmasked_tokens = unmasked_tokens.to(self.device)  # Unmasked tokens for representations
+        # For unmasked sequences
+        unmasked_sequences = [sample.sequence for sample in batch]
+        unmasked_inputs = tokenizer(
+            unmasked_sequences,
+            return_tensors="pt",
+            padding=True,
+            truncation=True
+        )
+        unmasked_tokens = {k: v.to(self.device) for k, v in unmasked_inputs.items()}
         print("unmasked_tokens_ready")
+
+
+        ###############
+
 
         print("-----------CHECK BELOW ------------------")
         print("masked_tokens dtype:", masked_tokens.dtype)
@@ -74,7 +112,7 @@ class ProteinReprModule(pl.LightningModule):
         #print("masked_tokens sample:", masked_tokens[:5])  
 
         #print("Batch tokens:", batch_tokens)
-        print("Batch tokens shape:", batch_tokens.shape)
+        #print("Batch tokens shape:", batch_tokens.shape)
         print("Valid token indices range: 0 to", len(self.alphabet.all_toks) - 1)
         print("Unique token indices in masked_tokens:", masked_tokens.unique())
         print("LEN Unique token indices in masked_tokens:", len(masked_tokens.unique()))
@@ -84,10 +122,10 @@ class ProteinReprModule(pl.LightningModule):
 
 
         with torch.no_grad():
-            teacher_res = self.teacher_model(unmasked_tokens)
+            teacher_res = self.teacher_model(**unmasked_tokens)
         print("teacher_resok")
             
-        student_res = self.student_model(unmasked_tokens)
+        student_res = self.student_model(**unmasked_tokens)
         print("teacher and student res ok")
         teacher_reps = get_seq_rep(teacher_res, batch_lens)  
         student_reps = get_seq_rep(student_res, batch_lens)
@@ -95,16 +133,16 @@ class ProteinReprModule(pl.LightningModule):
         print("-----------COMPARE BELOW ------------------")
         print("unmasked dtype:", unmasked_tokens.dtype)
         print("unmasked shape:", unmasked_tokens.shape)
-        print("unmasked", len(unmasked_data), unmasked_data[0])
+        #print("unmasked", len(unmasked_data), unmasked_data[0])
         print("masked_tokens dtype:", masked_tokens.dtype)
         print("masked_tokens shape:", masked_tokens.shape)
-        print("masked", len(masked_data), masked_data[0])
+        #print("masked", len(masked_data), masked_data[0])
 
         with torch.no_grad():
-            teacher_res = self.teacher_model(masked_tokens)
+            teacher_res = self.teacher_model(**masked_tokens)
         print("teacher_resok")
             
-        student_res = self.student_model(masked_tokens)
+        student_res = self.student_model(**masked_tokens)
         print("student_resok")
         student_logits = get_logits(student_res)  
         teacher_logits = get_logits(teacher_res)  
