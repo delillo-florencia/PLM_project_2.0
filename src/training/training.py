@@ -57,18 +57,6 @@ class ProteinReprModule(pl.LightningModule):
 
             print("masked seq save")
         
-        # masked_data = [(sample.seq_id, sample.masked_seq) for sample in masked_batch]
-        # _, _, batch_tokens = self.batch_converter(masked_data)
-        # masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
-        # batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
-
-        # print("masked_tokens_ready")
-
-        # unmasked_data = [(sample.seq_id, sample.sequence) for sample in batch]  # Get unmasked sequences
-        # _, _, unmasked_tokens = self.batch_converter(unmasked_data)
-        # unmasked_tokens = unmasked_tokens.to(self.device)  # Unmasked tokens for representations
-        # print("unmasked_tokens_ready")
-
 
         #######################
 
@@ -103,17 +91,6 @@ class ProteinReprModule(pl.LightningModule):
         ###############
 
 
-        print("-----------CHECK BELOW ------------------")
-        
-        #print("masked_tokens shape:", masked_tokens.shape)
-        #print("masked_tokens sample:", masked_tokens[:5])  
-
-        #print("Batch tokens:", batch_tokens)
-        #print("Batch tokens shape:", batch_tokens.shape)
-        #print("Valid token indices range: 0 to", len(self.alphabet.all_toks) - 1)
-        #print("Unique token indices in masked_tokens:", masked_tokens.unique())
-        #print("LEN Unique token indices in masked_tokens:", len(masked_tokens.unique()))
-
         self.teacher_model.requires_grad_(False)
         self.teacher_model.eval()
 
@@ -127,13 +104,7 @@ class ProteinReprModule(pl.LightningModule):
         teacher_reps = get_seq_rep(teacher_res, batch_lens)  
         student_reps = get_seq_rep(student_res, batch_lens)
         print("reps ok")
-        print("-----------COMPARE BELOW ------------------")
-        #print("unmasked dtype:", unmasked_tokens.shape)
-        #print("unmasked shape:", unmasked_tokens.shape)
-        #print("unmasked", len(unmasked_data), unmasked_data[0])
-        #print("masked_tokens dtype:", masked_tokens.shape)
-       #print("masked_tokens shape:", masked_tokens.shape)
-        #print("masked", len(masked_data), masked_data[0])
+
 
         with torch.no_grad():
             teacher_res = self.teacher_model(**masked_tokens)
@@ -153,9 +124,6 @@ class ProteinReprModule(pl.LightningModule):
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
         print("LOSS OKKKK ok")
 
-        self.log('train_loss', loss, prog_bar=True)
-        self.log('train_rep_loss', rep_loss, prog_bar=True)
-        self.log('train_log_loss', log_loss, prog_bar=True)
 
         # Define output directories for saving logits and representations
         teacher_logits_dir = os.path.join(self.output_dir, 'teacher_logits')
@@ -171,8 +139,19 @@ class ProteinReprModule(pl.LightningModule):
         torch.save(student_logits, os.path.join(student_logits_dir, f"batch_{batch_idx}_student_logits.pt"))
         torch.save(student_reps, os.path.join(student_reps_dir, f"batch_{batch_idx}_student_reps.pt"))
 
-        loss_dir = {"loss": loss, "train_rep_loss": rep_loss, "train_log_loss": log_loss}
-        self.outputs.append(loss_dir)
+        loss_list=[batch_idx,len(batch),loss,rep_loss,log_loss]
+
+
+        log_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/training_log.csv"
+        file_exists = os.path.exists(log_file)
+
+        with open(log_file, mode="a", newline="") as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["batch", "batch_size", "loss", "rep_loss","log_loss"])
+            else:
+                writer.writerow(loss_list)
+        
         return loss
 
 
@@ -180,7 +159,7 @@ class ProteinReprModule(pl.LightningModule):
         return torch.optim.Adam(self.student_model.parameters(), lr=1e-4)
 
 
-
+    ''' #ONLY MAKE SENSE FOR MORE THAN ONE EPOCH
     def on_train_epoch_end(self):
         print("Calculating metrics...")
         avg_loss = torch.stack([x["loss"] for x in self.outputs]).mean().item()
@@ -200,7 +179,7 @@ class ProteinReprModule(pl.LightningModule):
             if not file_exists:
                 writer.writerow(["epoch", "avg_loss", "avg_rep_loss", "avg_log_loss"])
             writer.writerow([self.current_epoch, avg_loss, avg_rep_loss, avg_log_loss])
-
+    '''
         # if (self.current_epoch) % 5 == 0:
         #     checkpoint_path = f"{self.output_dir}/checkpoint_epoch_{self.current_epoch}.ckpt"
         #     torch.save({
