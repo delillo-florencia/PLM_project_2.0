@@ -103,7 +103,7 @@ class ProteinReprModule(pl.LightningModule):
 
 
         print("-----------CHECK BELOW ------------------")
-        print("masked_tokens dtype:", masked_tokens.dtype)
+        
         print("masked_tokens shape:", masked_tokens.shape)
         #print("masked_tokens sample:", masked_tokens[:5])  
 
@@ -127,10 +127,10 @@ class ProteinReprModule(pl.LightningModule):
         student_reps = get_seq_rep(student_res, batch_lens)
         print("reps ok")
         print("-----------COMPARE BELOW ------------------")
-        print("unmasked dtype:", unmasked_tokens.dtype)
+        print("unmasked dtype:", unmasked_tokens.shape)
         print("unmasked shape:", unmasked_tokens.shape)
         #print("unmasked", len(unmasked_data), unmasked_data[0])
-        print("masked_tokens dtype:", masked_tokens.dtype)
+        print("masked_tokens dtype:", masked_tokens.shape)
         print("masked_tokens shape:", masked_tokens.shape)
         #print("masked", len(masked_data), masked_data[0])
 
