@@ -56,6 +56,7 @@ class ProteinReprModule(pl.LightningModule):
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
         masked_batch, masked_pos = zip(*masked_results)
+        print("masking done")
     
         #save masked sequences
         if self.save_masked_sequences:
@@ -65,11 +66,15 @@ class ProteinReprModule(pl.LightningModule):
             with open(os.path.join(masked_sequences_dir, f"batch_{batch_idx}_masked_sequences.txt"), 'w') as f:
                 for sample in masked_batch:
                     f.write(sample.masked_seq + "\n")
+
+        print("masked seq save")
         
         masked_data = [(sample.seq_id, sample.masked_seq) for sample in masked_batch]
         _, _, batch_tokens = self.batch_converter(masked_data)
         masked_tokens = batch_tokens.to(self.device)  # Masked tokens for logits
         batch_lens = (masked_tokens != self.alphabet.padding_idx).sum(1)
+
+        print()
 
         unmasked_data = [(sample.seq_id, sample.sequence) for sample in batch]  # Get unmasked sequences
         _, _, unmasked_tokens = self.batch_converter(unmasked_data)
