@@ -205,5 +205,5 @@ trainer = pl.Trainer(
     precision="bf16-mixed"
 )
 print("Trainer ok")
-trainer.fit(model, train_dataloader=data_module.dataloader())
+trainer.fit(model, train_dataloaders=data_module.dataloader())
 print("Done")
