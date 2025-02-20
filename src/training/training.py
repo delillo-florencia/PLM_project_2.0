@@ -255,7 +255,6 @@ trainer = pl.Trainer(
     strategy="ddp_find_unused_parameters_true",
     max_epochs=1,
     enable_progress_bar=True,  
-    log_every_n_steps=1,
     enable_model_summary=True,
     use_distributed_sampler=False,
     precision="bf16-mixed",
