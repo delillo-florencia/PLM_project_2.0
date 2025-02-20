@@ -139,7 +139,7 @@ class ProteinReprModule(pl.LightningModule):
         torch.save(student_logits, os.path.join(student_logits_dir, f"batch_{batch_idx}_student_logits.pt"))
         torch.save(student_reps, os.path.join(student_reps_dir, f"batch_{batch_idx}_student_reps.pt"))
 
-        loss_list=[batch_idx,len(batch),loss,rep_loss,log_loss]
+        loss_list=[batch_idx,len(batch),str(loss.item()),str(rep_loss.item()),str(log_loss.item())]
 
 
         log_file = "/home/cpebiosustain_gmail_com/workspace/PLM_project_2.0/data/outputs/training_log.csv"
@@ -238,7 +238,7 @@ sampler_params = {
     "max_batch_tokens": 10000,
     "shuffle": False, # all samples before bucketing
     "shuffle_batch_order": True, # batch order after bucketing
-    "max_batch_num": None, # max number of batches across all GPUs
+    "max_batch_num": 8, # max number of batches across all GPUs
 }
 
 data_module = ProteinDataModule(csv_file, hash_file, sampler_params, collate_fn=lambda x: x)
@@ -252,7 +252,7 @@ print("model ok--")
 trainer = pl.Trainer(
     devices=DEVICES,
     accelerator="gpu",
-    strategy="ddp",
+    strategy="ddp_find_unused_parameters_true",
     max_epochs=1,
     enable_progress_bar=True,  
     log_every_n_steps=1,
