@@ -1,8 +1,8 @@
 import os
 import torch
 import pytorch_lightning as pl
-from utils.pyl_utils import ProteinDataModule, ProteinReprModule
-
+from lightning.data_module import ProteinDataModule
+from lightning.pyl_module import ProteinReprModule
 # Let Slurm handle rank and world size
 RANK = int(os.environ["SLURM_PROCID"])  # Global rank
 WORLD_SIZE = int(os.environ["SLURM_NTASKS"])  # Total processes (should be 4 for 4 GPUs)

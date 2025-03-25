@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
-from utils.pyl_utils import ProteinDataModule, ProteinReprModule
+from lightning.data_module import ProteinDataModule
+from lightning.pyl_module import ProteinReprModule
 import torch
 import os
 

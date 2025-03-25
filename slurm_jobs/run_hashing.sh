@@ -10,7 +10,7 @@
 #SBATCH --partition=compute
 
 
-torchrun --standalone --nnodes=1 --nproc_per_node=4 src/training/get_reps_token_size.py
+torchrun --standalone --nnodes=1 --nproc_per_node=4 src/tools/run_hashing.py
 
 
 

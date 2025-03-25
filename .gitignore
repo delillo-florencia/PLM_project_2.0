@@ -1,4 +1,5 @@
 data/*
+outputs/*
 reps_output_tokens.txt
 reps_output.txt
 logi_output.txt

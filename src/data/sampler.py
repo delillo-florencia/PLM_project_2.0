@@ -1,104 +1,8 @@
-import csv
-import pickle
-import math
+from torch.utils.data import  Sampler
 import random
 import torch
+import math
 import numpy as np
-from torch.utils.data import Dataset, Sampler
-from faesm.esm import FAEsmForMaskedLM
-from esm import Alphabet
-
-
-
-class ModelSelector:
-
-    MODEL_MAPPING = {
-        "8M":   {"model_name": "facebook/esm2_t6_8M_UR50D"},
-        "35M":  {"model_name": "facebook/esm2_t12_35M_UR50D"},
-        "150M": {"model_name": "facebook/esm2_t30_150M_UR50D"},
-        "650M": {"model_name": "facebook/esm2_t33_650M_UR50D"},
-        "3B":   {"model_name": "facebook/esm2_t36_3B_UR50D"},
-        "15B":  {"model_name": "facebook/esm2_t48_15B_UR50D"}}
-    
-    def __init__(self, param_size: str):
-        try:
-            model_info = self.MODEL_MAPPING[param_size]
-        except KeyError:
-            raise ValueError(param_size)
-        self.model = FAEsmForMaskedLM.from_pretrained(model_info["model_name"])
-        self.alphabet = Alphabet.from_architecture("ESM-1")
-
-
-
-class Sequence:
-    
-    def __init__(self, sequence, length, taxon_id, seq_id):
-        self.sequence = str(sequence)
-        self.length = int(length)
-        self.taxon_id = int(taxon_id)
-        self.seq_id = str(seq_id)
-        self.masked_seq = ""
-
-    def add_masking(self, seq):
-        self.masked_seq = seq
-
-
-
-class HashedProteinDataset(Dataset):
-    """
-    Firstly, pre-hash your master dataset:
-    > HashedProteinDataset.create_hashed_data("massive_file.csv", "massive_file.hash")
-
-    Later, use hashed file to generate the dataset with hashed reference:
-    dataset = HashedProteinDataset("massive_file.csv", "massive_file.hash")
-    """
-    def __init__(self, csv_file, hashed_data_path):
-        with open(hashed_data_path, 'rb') as f:
-            data = pickle.load(f)
-        self.header = data['header']
-        self.line_offsets = data['line_offsets']
-        self.lengths = data['lengths']
-        self.taxon_ids = data['taxon_ids']
-        self.csv_file = csv_file
-        self._file_handle = None
-
-    def __len__(self):
-        return len(self.line_offsets)
-
-    def _get_file_handle(self):
-        if self._file_handle is None:
-            self._file_handle = open(self.csv_file, 'r', newline='', encoding='utf-8')
-        return self._file_handle
-
-    def __getitem__(self, index):
-        f = self._get_file_handle()
-        f.seek(self.line_offsets[index])
-        line = f.readline().strip()
-        row = line.split(',')
-        return Sequence(row[3], row[2], row[1], row[0])
-
-    @staticmethod
-    def create_hashed_data(csv_file, hashed_data_path):
-        offsets = []
-        lengths = []
-        taxon_ids = []
-        with open(csv_file, 'r', newline='', encoding='utf-8') as f:
-            header = next(csv.reader([f.readline()]))
-            pos = f.tell()
-            line = f.readline()
-            while line:
-                offsets.append(pos)
-                row = line.strip().split(',')
-                d = dict(zip(header, row))
-                lengths.append(int(d['sequence_length']))
-                taxon_ids.append(int(d['taxon_id']))
-                pos = f.tell()
-                line = f.readline()
-        data = {'header': header, 'line_offsets': offsets, 'lengths': lengths, 'taxon_ids': taxon_ids}
-        with open(hashed_data_path, 'wb') as f:
-            pickle.dump(data, f)
-
-
 
 class DynamicTaxonIdSampler(Sampler):
     def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=128, min_len=0, max_len=1024, max_batch_num=None,
@@ -140,6 +44,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.shuffle_batch_order = shuffle_batch_order
         self.seed = seed
         self.drop_last = drop_last
+        self.fixed_batches = None
         self.__epoch = 0
         self.__per_gpu_batch_num = 0
         self.__batches = []
@@ -154,7 +59,17 @@ class DynamicTaxonIdSampler(Sampler):
 
     def set_epoch(self, epoch):
         self.__epoch = epoch
-        self.__batches = self._prepare_batches()
+        # If max_batch_num is set and fixed_batches is already computed, reuse them
+        if self.max_batch_num != float('inf') and self.fixed_batches is not None:
+            rng = np.random.default_rng(self.seed + self.__epoch)
+            permuted_order = rng.permutation(len(self.fixed_batches))
+            self.__batches = [self.fixed_batches[i] for i in permuted_order]
+            self.__per_gpu_batch_num = math.ceil(len(self.__batches) / self.num_replicas)
+        else:
+            batches = self._prepare_batches()
+            if self.max_batch_num != float('inf'):
+                self.fixed_batches = batches.copy()  # Save the truncated list for reuse
+            self.__batches = batches
 
     def _is_full(self, tokens, batch):
         return len(batch) >= self.max_batch_size or tokens > self.max_batch_tokens
@@ -224,8 +139,7 @@ class DynamicTaxonIdSampler(Sampler):
             batches = [batches[i] for i in permuted_order]
 
         # truncate the total number of batches to max_batch_num (total over all GPUs)
-        # THIS LOGIC IS INCORRECT, AFTER SHUFFLING ALL BATCHES THIS WILL GIVE COMPLETELY DIFFERENT BATCHES EACH EPOCH
-        # INTENTION WAS TO GIVE SHUFFLED BATCHES FROM THE WHOLE DATASET, AND EACH EPOCH SHUFFLE EXACTLY THE SAME SUBSET OF BATCHES
+        # THIS LOGIC IS CORRECT - SEE _SET_EPOCH OK MAN
         if self.max_batch_num != float('inf'):
             total = (self.max_batch_num // self.num_replicas) * self.num_replicas
             batches = batches[:total]
@@ -235,28 +149,3 @@ class DynamicTaxonIdSampler(Sampler):
     
         self.__per_gpu_batch_num = per_gpu
         return batches
-
-
-def get_seq_rep(results, batch_lens):
-    """
-    Get sequence representations from esm_compute
-    """
-    token_representations = results["last_hidden_state"]
-
-    # Generate per-sequence representations via averaging
-    sequence_representations = []
-    for i, tokens_len in enumerate(batch_lens):
-        sequence_representations.append(token_representations[i, 1: tokens_len - 1].mean(0))
-
-    return sequence_representations
-
-
-
-def get_logits(results):
-    """
-    Extracts logits from esm_compute
-    """
-    logits = results["logits"]  
-
-    return logits
-

@@ -1,7 +1,6 @@
 # PyTorch and related imports
 import torch
 import torch.nn as nn
-import torch.nn.functional as functional
 
 
 mse_loss = nn.MSELoss()
@@ -12,7 +11,7 @@ def kernel_similarity_matrix(repr):
     Calculates the cosine similarity between each pair of token embeddings on the kernel
     """
     if isinstance(repr, list):
-        repr = torch.stack([torch.tensor(k) for k in repr])  # Convert list to tensor
+        repr = torch.stack([k.clone().detach() if isinstance(k, torch.Tensor) else torch.tensor(k) for k in repr])
     
     repr = torch.nn.functional.normalize(repr, p=2, dim=1)
     cosine_similarity_matrix = torch.mm(repr, repr.T)
