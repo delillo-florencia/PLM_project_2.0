@@ -1,0 +1,7 @@
+python==3.8
+lightning-utilities==0.11.9
+pytorch-lightning==2.4.0
+torch==2.4.1
+faesm==0.1.1
+fair-esm==2.0.0
+numpy
