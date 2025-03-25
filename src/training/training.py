@@ -37,13 +37,13 @@ torch.cuda.set_device(LOCAL_RANK)
 # --------------------- PARAMETERS ---------------------
 
 # define input data sources
-csv_file = "/home/developer/Projects/PLM_project_2.0/data/uniprot_data_500k_sampled.csv"
-train_hash_file = "/home/developer/Projects/PLM_project_2.0/data/uniprot_data_500k_sampled_train.hash"
-val_hash_file = "/home/developer/Projects/PLM_project_2.0/data/uniprot_data_500k_sampled_val.hash"
-precomputed_dir = "/home/developer/Projects/PLM_project_2.0/data/outputs/timestamp" # used for offline training
+csv_file = "/home/developer/workspace/PLM_project_2.0/data/final_uniref100.csv"
+train_hash_file = "/home/developer/workspace/PLM_project_2.0/data/uniref_train.hash"
+val_hash_file = "/home/developer/workspace/PLM_project_2.0/data/uniref_val.hash"
+precomputed_dir = "/home/developer/workspace/PLM_project_2.0/outputs/timestamp" # used for offline training
 
 # define run name and master output dir!
-output_dir = "/home/developer/Projects/PLM_project_2.0/outputs/"
+output_dir = "/home/developer/workspace/PLM_project_2.0/outputs/"
 run_name = "test2"
 
 # training parameters
