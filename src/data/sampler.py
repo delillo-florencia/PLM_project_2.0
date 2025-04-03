@@ -3,6 +3,7 @@ import random
 import torch
 import math
 import numpy as np
+from tqdm import tqdm
 
 class DynamicTaxonIdSampler(Sampler):
     def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=128, min_len=0, max_len=1024, max_batch_num=None,
@@ -75,6 +76,7 @@ class DynamicTaxonIdSampler(Sampler):
         return len(batch) >= self.max_batch_size or tokens > self.max_batch_tokens
 
     def _prepare_batches(self):
+        print("Preparing batches")
         if self.shuffle:
             g = torch.Generator()
             g.manual_seed(self.seed + self.__epoch)
@@ -86,8 +88,8 @@ class DynamicTaxonIdSampler(Sampler):
 
         batches = []
         buckets = {}  # key: (taxon_id, length_bucket)
-
-        for idx in indices:
+        print("iterating...")
+        for idx in tqdm(indices, desc="Processing", unit="sample"):
 
             length = self.seq_lengths[idx]
             taxon_id = self.taxon_ids[idx]
@@ -116,24 +118,28 @@ class DynamicTaxonIdSampler(Sampler):
                 else:
                     batches.append(bucket['indices'])
                     buckets[bucket_key] = {'indices': [], 'max_len': 0}
-
+        print("batches_ok")
         # process leftover samples in all buckets.
         for bucket in buckets.values():
+            
             if bucket['indices']:
                 batches.append(bucket['indices'])
-
+        print("all_processed")
         # make sure the number of butches works for DDP
         random.seed(self.seed + self.__epoch)
         per_gpu = math.ceil(len(batches) / self.num_replicas)
+        print("per_gpu",per_gpu)
         total = per_gpu * self.num_replicas
         dummy = total - len(batches)
         if dummy <= len(batches):
             batches += random.sample(batches, dummy)
         else:
+            print("summing")
             batches += [random.choice(batches) for _ in range(dummy)]
-
+        print("batches_done")
         # shuffle batch order
         if self.shuffle_batch_order:
+            print("Shuffling")
             rng = np.random.default_rng(self.seed + self.__epoch)
             permuted_order = rng.permutation(len(batches))
             batches = [batches[i] for i in permuted_order]
