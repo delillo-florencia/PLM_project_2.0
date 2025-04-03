@@ -1,4 +1,3 @@
-
 from torch.utils.data import Dataset
 from data.sequence import Sequence
 import random
@@ -38,10 +37,8 @@ class HashedProteinDataset(Dataset):
         row = line.split(',')
         return Sequence(row[3], row[2], row[1], row[0])
 
-
     @staticmethod
     def create_hashed_data(csv_file, hashed_data_prefix, train_ratio=0.7, val_ratio=0.2, test_ratio=0.1):
-
         offsets_train = []
         lengths_train = []
         taxon_ids_train = []
@@ -53,7 +50,6 @@ class HashedProteinDataset(Dataset):
         taxon_ids_test = []
 
         with open(csv_file, 'r', newline='', encoding='utf-8') as f:
-            
             # header from CSV file
             header = next(csv.reader([f.readline()]))
             pos = f.tell()
@@ -61,32 +57,41 @@ class HashedProteinDataset(Dataset):
             
             # validate ratio input
             total = train_ratio + val_ratio + test_ratio
-            if total == 1:
-                raise ValueError("All ratios must equal one!")
+            if abs(total - 1.0) > 1e-9:
+                raise ValueError("All ratios must sum to one!")
             
             while line:
-
                 # compute line offset
-                r = random.random() * total
-                if r < train_ratio:
-                    offsets_train.append(pos)
-                elif r < train_ratio + val_ratio:
-                    offsets_val.append(pos)
-                else:
-                    offsets_test.append(pos)
+                r = random.random()
                 row = line.strip().split(',')
                 d = dict(zip(header, row))
-
-                # append data to respective lists based on the same random decision
-                if r < train_ratio:
-                    lengths_train.append(int(d['sequence_length']))
-                    taxon_ids_train.append(int(d['taxon_id']))
-                elif r < train_ratio + val_ratio:
-                    lengths_val.append(int(d['sequence_length']))
-                    taxon_ids_val.append(int(d['taxon_id']))
-                else:
-                    lengths_test.append(int(d['sequence_length']))
-                    taxon_ids_test.append(int(d['taxon_id']))
+                
+                # Skip if taxon_id is "Unknown" or empty
+                if d.get('taxon_id', '').strip() in ['', 'Unknown']:
+                    pos = f.tell()
+                    line = f.readline()
+                    continue
+                
+                try:
+                    # Process sequence length (convert to int)
+                    seq_length = int(d['sequence_length'])
+                    
+                    # Append to appropriate set based on random number
+                    if r < train_ratio:
+                        offsets_train.append(pos)
+                        lengths_train.append(seq_length)
+                        taxon_ids_train.append(d['taxon_id'])  # Keep as string
+                    elif r < train_ratio + val_ratio:
+                        offsets_val.append(pos)
+                        lengths_val.append(seq_length)
+                        taxon_ids_val.append(d['taxon_id'])
+                    else:
+                        offsets_test.append(pos)
+                        lengths_test.append(seq_length)
+                        taxon_ids_test.append(d['taxon_id'])
+                except (ValueError, KeyError) as e:
+                    print(f"Error processing row: {e}. Row data: {d}")
+                
                 pos = f.tell()
                 line = f.readline()
 
