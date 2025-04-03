@@ -11,23 +11,6 @@ from torch.nn.utils.rnn import pad_sequence
 logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for more output
 
 
-# --------------------- LIGHTENING MODULES  ---------------------
-
-# call back for setting epoch for dataloader
-class SetEpochCallback(pl.Callback):
-    def on_train_epoch_start(self, trainer, pl_module):
-        self.pl_module = pl_module
-        dataloader = trainer.train_dataloader
-        dataloader.batch_sampler.set_epoch(trainer.current_epoch) 
-        # I am still unsure about this bit, lets see how it unrols on testing /KACPER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #if isinstance(dataloader, dict):
-        #    for dl in dataloader.values():
-        #        if hasattr(dl.batch_sampler, "set_epoch"):
-        #            dl.batch_sampler.set_epoch(trainer.current_epoch)
-        #else:
-        #    if hasattr(dataloader.batch_sampler, "set_epoch"):
-                
-
 # trainer class
 class ProteinTrainModule(pl.LightningModule):
     def __init__(self, student_model_param, teacher_model_param, distillation_loss, 
@@ -50,9 +33,15 @@ class ProteinTrainModule(pl.LightningModule):
     def forward(self, x):
         return self.student_model(x)
     
-    def train_step(self, batch):
-        rep = self.forward(batch)
-        return rep
+    # likely not needed //kacper
+    # def train_step(self, batch):
+    #     rep = self.forward(batch)
+    #     return rep
+
+    # callback was removed and moved here for further simplicity, revert if needed
+    def on_train_epoch_start(self):
+        train_loader = self.trainer.train_dataloader
+        batch_sampler = train_loader.batch_sampler
 
     def training_step(self, batch, batch_idx):
 
