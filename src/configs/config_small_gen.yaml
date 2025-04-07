@@ -1,0 +1,53 @@
+# define input data sources
+#csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all.csv"
+#train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_train.hash"
+#val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_val.hash"
+csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
+train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
+val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
+
+# used for offline training - point to the dir with version ending!
+precomputed_dir: "/home/developer/workspace/PLM_project_2.0/outputs/kacper_gen_reps2/version_0" 
+
+# define run name and master output dir!
+output_dir: "/home/developer/workspace/PLM_project_2.0/outputs/"
+run_name: "kacper_gen_reps2"
+
+# hyper params
+hyper_params:
+  learning_rate: 0.001819
+
+# training parameters
+loop_params:
+  student_model_param: "8M" # student model
+  teacher_model_param: "150M" # teacher model
+  save_masked_sequences: false # should tensor masking of seqeunces be saved
+  # should we use precomputed reps and logits?
+  use_saved_reps_logs: false
+  # save representations and logits per batch (only first epoch)
+  save_reps_logs: true
+  # save metrics per batch, by default its saved only per epoch
+  save_per_batch: false
+
+# sanity check for applied hashing
+hashing_params:
+  train_size_ratio: 0.7
+  val_size_ratio: 0.2
+  test_size_ratio: 0.1
+
+# dataloader parameters
+train_sampler_params:
+  max_batch_tokens: 2000 # maximum token number per batch
+  shuffle: false # all samples before bucketing
+  shuffle_batch_order: true # batch order after bucketing
+  max_batch_num: 100 # max number of batches across all GPUs
+
+# checkpoint parameters
+checkpoint_params:
+  every_n_epochs: 0 # save per epoch (use 'every_n_train_steps' for per batch)
+  save_top_k: 1 # -1 if save all, or 1 to keep only the last one
+
+# extra trainer settings
+# enything here is passed to the trainer
+trainer_params:
+  max_epochs: 1 # set epoch number

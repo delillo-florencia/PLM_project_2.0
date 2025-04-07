@@ -32,6 +32,10 @@ def kernel_mse_alignment_loss(teacher_kernel, student_kernel):
     teacher_non_diag = teacher_matrix[mask]
     student_non_diag = student_matrix[mask]
 
+    # if there's only one token do fallback to MSE between representations
+    if teacher_non_diag.numel() == 0 or student_non_diag.numel() == 0:
+        return mse_loss(teacher_kernel, student_kernel)
+
     return mse_loss(teacher_non_diag, student_non_diag)
 
 

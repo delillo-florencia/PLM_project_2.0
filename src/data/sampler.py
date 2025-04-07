@@ -76,7 +76,6 @@ class DynamicTaxonIdSampler(Sampler):
         return len(batch) >= self.max_batch_size or tokens > self.max_batch_tokens
 
     def _prepare_batches(self):
-        print("Preparing batches")
         if self.shuffle:
             g = torch.Generator()
             g.manual_seed(self.seed + self.__epoch)
@@ -88,8 +87,7 @@ class DynamicTaxonIdSampler(Sampler):
 
         batches = []
         buckets = {}  # key: (taxon_id, length_bucket)
-        print("iterating...")
-        for idx in tqdm(indices, desc="Processing", unit="sample"):
+        for idx in tqdm(indices, desc="Processing batches", unit="sample"):
 
             length = self.seq_lengths[idx]
             taxon_id = self.taxon_ids[idx]
@@ -118,31 +116,24 @@ class DynamicTaxonIdSampler(Sampler):
                 else:
                     batches.append(bucket['indices'])
                     buckets[bucket_key] = {'indices': [], 'max_len': 0}
-        print("batches_ok")
         # process leftover samples in all buckets.
         for bucket in buckets.values():
             
             if bucket['indices']:
                 batches.append(bucket['indices'])
-        print("all_processed")
         # make sure the number of butches works for DDP
         random.seed(self.seed + self.__epoch)
         per_gpu = math.ceil(len(batches) / self.num_replicas)
-        print("per_gpu",per_gpu)
         total = per_gpu * self.num_replicas
         dummy = total - len(batches)
         if dummy <= len(batches):
             batches += random.sample(batches, dummy)
         else:
-            print("summing")
             batches += [random.choice(batches) for _ in range(dummy)]
-        print("batches_done")
         # shuffle batch order
         if self.shuffle_batch_order:
-            print("Shuffling")
             rng = np.random.default_rng(self.seed + self.__epoch)
-            permuted_order = rng.permutation(len(batches))
-            batches = [batches[i] for i in permuted_order]
+            rng.shuffle(batches)
 
         # truncate the total number of batches to max_batch_num (total over all GPUs)
         # THIS LOGIC IS CORRECT - SEE _SET_EPOCH OK MAN

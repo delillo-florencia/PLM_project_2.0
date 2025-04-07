@@ -19,6 +19,9 @@ class ProteinTrainModule(pl.LightningModule):
         super().__init__()
         self.student_model = ModelSelector(student_model_param, use_flash).model
         self.teacher_model = ModelSelector(teacher_model_param, use_flash).model
+        self.teacher_model.requires_grad_(False)
+        self.teacher_model.eval()
+        self.student_model.train()
         self.tokenizer = self.teacher_model.tokenizer
         self.distillation_loss = distillation_loss
         self.output_dir = output_dir
@@ -32,16 +35,6 @@ class ProteinTrainModule(pl.LightningModule):
     
     def forward(self, x):
         return self.student_model(x)
-    
-    # likely not needed //kacper
-    # def train_step(self, batch):
-    #     rep = self.forward(batch)
-    #     return rep
-
-    # callback was removed and moved here for further simplicity, revert if needed
-    def on_train_epoch_start(self):
-        train_loader = self.trainer.train_dataloader
-        batch_sampler = train_loader.batch_sampler
 
     def training_step(self, batch, batch_idx):
 
@@ -69,19 +62,16 @@ class ProteinTrainModule(pl.LightningModule):
         unmasked_inputs = self.tokenizer(unmasked_sequences, return_tensors="pt", padding=True)
         unmasked_tokens = {k: v.to(self.device) for k, v in unmasked_inputs.items()}
 
-        # set models
-        self.teacher_model.requires_grad_(False)
-        self.teacher_model.eval()
-        self.teacher_model.train()
-
         ### TEACHER MODEL START ###
 
         # OFFLINE TRAINING
         if self.use_saved_reps_logs_dir:
             # get teacher representations 
-            teacher_reps = torch.load(os.path.join(self.use_saved_reps_logs_dir, "teacher_reps", f"epoch_{self.current_epoch}_batch_{batch_idx}_teacher_reps.pt"))
+            teacher_reps = torch.load(os.path.join(self.use_saved_reps_logs_dir, "teacher_reps", f"batch_{batch_idx}_teacher_reps.pt"), 
+                weights_only=True, map_location=torch.device(torch.cuda.current_device()))
             # get teacher logits
-            teacher_logits = torch.load(os.path.join(self.use_saved_reps_logs_dir, "teacher_logits", f"epoch_{self.current_epoch}_batch_{batch_idx}_teacher_logits.pt"))
+            teacher_logits = torch.load(os.path.join(self.use_saved_reps_logs_dir, "teacher_logits", f"batch_{batch_idx}_teacher_logits.pt"), 
+                weights_only=True, map_location=torch.device(torch.cuda.current_device()))
             
         # ONLINE TRAINING
         else:
@@ -113,13 +103,13 @@ class ProteinTrainModule(pl.LightningModule):
             "train_logi_loss": log_loss})
 
         #output directories for saving logits and representations per batch
-        if self.current_epoch == 0 and self.save_reps_logs:
+        if self.local_rank == 0 and self.current_epoch == 0 and self.save_reps_logs:
             teacher_logits_dir = os.path.join(self.output_dir, 'teacher_logits')
             teacher_reps_dir = os.path.join(self.output_dir, 'teacher_reps')
             os.makedirs(teacher_logits_dir, exist_ok=True)
             os.makedirs(teacher_reps_dir, exist_ok=True)
-            torch.save(teacher_logits, os.path.join(teacher_logits_dir, f"epoch_{self.current_epoch}_batch_{batch_idx}_teacher_logits.pt"))
-            torch.save(teacher_reps, os.path.join(teacher_reps_dir, f"epoch_{self.current_epoch}_batch_{batch_idx}_teacher_reps.pt"))
+            torch.save(teacher_logits, os.path.join(teacher_logits_dir, f"batch_{batch_idx}_teacher_logits.pt"))
+            torch.save(teacher_reps, os.path.join(teacher_reps_dir, f"batch_{batch_idx}_teacher_reps.pt"))
 
         # output for saving training logs per batch
         if self.save_per_batch:
