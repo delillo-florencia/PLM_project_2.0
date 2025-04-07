@@ -11,16 +11,16 @@ precomputed_dir: "/home/developer/workspace/PLM_project_2.0/outputs/test/version
 
 # define run name and master output dir!
 output_dir: "/home/developer/workspace/PLM_project_2.0/outputs/"
-run_name: "flor_test2"
+run_name: "cloud_r1"
 
 # hyper params
 hyper_params:
-  learning_rate: 0.001819
+  learning_rate: 0.0001819
 
 # training parameters
 loop_params:
   student_model_param: "8M" # student model
-  teacher_model_param: "650M" # teacher model
+  teacher_model_param: "3B" # teacher model
   save_masked_sequences: false # should tensor masking of seqeunces be saved
   # should we use precomputed reps and logits?
   use_saved_reps_logs: false
