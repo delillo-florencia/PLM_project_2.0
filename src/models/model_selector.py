@@ -21,5 +21,5 @@ class ModelSelector:
             raise ValueError(param_size)
         self.model = FAEsmForMaskedLM.from_pretrained(model_info["model_name"], use_fa=use_fa)
         self.alphabet = Alphabet.from_architecture("ESM-1") #unused
-
+        print("Model selected correctly")
 

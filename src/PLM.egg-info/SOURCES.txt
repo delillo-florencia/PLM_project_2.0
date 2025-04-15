@@ -18,6 +18,7 @@ tests/__init__.py
 tests/check_checkpoints.py
 tests/get_reps_test.py
 tests/get_reps_token_size.py
+tests/test_dataloader.py
 tests/test_faem.py
 tools/__init__.py
 tools/lr_finder.py

@@ -2,8 +2,8 @@
 import torch
 import torch.nn as nn
 
-
 mse_loss = nn.MSELoss()
+
 
 
 def kernel_similarity_matrix(repr):
@@ -11,33 +11,38 @@ def kernel_similarity_matrix(repr):
     Calculates the cosine similarity between each pair of token embeddings on the kernel
     """
     if isinstance(repr, list):
-        repr = torch.stack([k.clone().detach() if isinstance(k, torch.Tensor) else torch.tensor(k) for k in repr])
+        repr = torch.stack([torch.tensor(k) for k in repr])  # Convert list to tensor
+    
+    # If kernel is a PyTorch tensor, move it to CPU and convert to NumPy
+    # if not isinstance(kernel, torch.Tensor):
+    #     kernel = kernel.cpu().detach().numpy()  # Move to CPU and detach if needed
+    
+    #print(type(repr))  # Debugging print
     
     repr = torch.nn.functional.normalize(repr, p=2, dim=1)
+
     cosine_similarity_matrix = torch.mm(repr, repr.T)
+
+    #print(cosine_similarity_matrix.shape)
 
     return cosine_similarity_matrix
 
-
 def kernel_mse_alignment_loss(teacher_kernel, student_kernel):
     """
-    Calculates the MSE kernel alignment loss between teacher and student,
-    excluding the diagonal elements of the cosine similarity matrix.
+    Calculates the MSE kernel alignment loss between teacher and student
     """
-    teacher_matrix = kernel_similarity_matrix(teacher_kernel)
-    student_matrix = kernel_similarity_matrix(student_kernel)
+    #print("zero")
+    kernel_similarity_matrix(teacher_kernel)
+    #print("zero")
+    teacher_matrix = torch.tensor(kernel_similarity_matrix(teacher_kernel))
+    #print("zero")
+    student_matrix = torch.tensor(kernel_similarity_matrix(student_kernel))
+    #print("zero")
 
-    # exclude the diagonal elements
-    mask = ~torch.eye(teacher_matrix.size(0), dtype=torch.bool)
-    teacher_non_diag = teacher_matrix[mask]
-    student_non_diag = student_matrix[mask]
+    if teacher_matrix.shape != student_matrix.shape:
+        teacher_matrix, student_matrix = pad_to_match(teacher_matrix, student_matrix)
 
-    # if there's only one token do fallback to MSE between representations
-    if teacher_non_diag.numel() == 0 or student_non_diag.numel() == 0:
-        return mse_loss(teacher_kernel, student_kernel)
-
-    return mse_loss(teacher_non_diag, student_non_diag)
-
+    return mse_loss(teacher_matrix, student_matrix)
 
 def logits_mse_loss(teacher_logits, student_logits):
     """
@@ -55,7 +60,9 @@ class DistillationLoss(nn.Module):
     def forward(self, teacher_rep, teacher_logits, student_rep, student_logits):
 
         alignment_loss = kernel_mse_alignment_loss(teacher_rep, student_rep)
+
         logits_loss = logits_mse_loss(teacher_logits, student_logits)
+
         total_loss = self.weight_rep * alignment_loss + self.weight_logits * logits_loss
 
         return total_loss, alignment_loss, logits_loss

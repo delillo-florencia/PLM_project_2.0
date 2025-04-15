@@ -1,16 +1,16 @@
-# define input data sources
-csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all.csv"
-train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_train.hash"
-val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_val.hash"
+##define input data sources
+csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k.csv"
+train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_train.hash"
+val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_val.hash"
 #csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 #train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
 #val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
 
 # used for offline training - point to the dir with version ending!
-precomputed_dir: "/home/developer/workspace/PLM_project_2.0/outputs/test/version_0" 
+precomputed_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/test/version_0" 
 
 # define run name and master output dir!
-output_dir: "/home/developer/workspace/PLM_project_2.0/outputs/"
+output_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/"
 run_name: "cloud_r1"
 
 # hyper params
@@ -19,7 +19,7 @@ hyper_params:
 
 # training parameters
 loop_params:
-  student_model_param: "8M" # student model
+  student_model_param: "150M" # student model
   teacher_model_param: "3B" # teacher model
   save_masked_sequences: false # should tensor masking of seqeunces be saved
   # should we use precomputed reps and logits?
@@ -37,10 +37,11 @@ hashing_params:
 
 # dataloader parameters
 train_sampler_params:
-  max_batch_tokens: 4000 # maximum token number per batch
+  max_batch_tokens: 1000 # maximum token number per batch
+
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
-  max_batch_num: 4000 # max number of batches across all GPUs
+  max_batch_num: 200  # max number of batches across all GPUs
 
 # checkpoint parameters
 checkpoint_params:

@@ -27,7 +27,7 @@ except ImportError:
 # --------------------- GLOBALS ---------------------
 
 RANK = int(os.environ.get("SLURM_PROCID", 0))
-#WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
+WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
 LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
 DEVICES = torch.cuda.device_count()
 torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
@@ -63,16 +63,22 @@ hyper_params = cfg["hyper_params"]
 
 # ---------------------- TRAINING ----------------------
 
+#hot fix here !!!
+if train_sampler_params["max_batch_tokens"] is not False:
+    val_max_batch_num = int(train_sampler_params["max_batch_num"] * hashing_params["val_size_ratio"] / hashing_params["train_size_ratio"])
+else:
+    val_max_batch_num = None
+
 # infere fixed validation dataloader params
 val_sampler_params = {
     "max_batch_tokens": train_sampler_params["max_batch_tokens"],
     "shuffle": False, "shuffle_batch_order": False,
-    "max_batch_num": int(train_sampler_params["max_batch_num"] * hashing_params["val_size_ratio"] / hashing_params["train_size_ratio"])}
+    "max_batch_num": val_max_batch_num}
 val_sampler_params["num_replicas"] = DEVICES
 val_sampler_params["rank"] = RANK
 train_sampler_params["num_replicas"] = DEVICES
 train_sampler_params["rank"] = RANK
-
+print("Creating output files..")
 # create output files
 version_file = os.path.join(output_dir, run_name, ".version")
 if int(os.getenv("LOCAL_RANK", 0)) == 0:
@@ -97,6 +103,7 @@ else:
     version = open(version_file).read().strip()
     checkpoint_dir = os.path.join(output_dir_ver, 'checkpoints')
 
+print("TensorLoger")
 # turn on tensorboard for convenience
 tb_logger = TensorBoardLogger(output_dir, name=run_name, version=version, default_hp_metric=True)
 
@@ -104,16 +111,19 @@ tb_logger = TensorBoardLogger(output_dir, name=run_name, version=version, defaul
 tb_logger.log_hyperparams(hyper_params)
 
 # load modules
+print("Loading_models")
 train_data_module = ProteinDataModule(csv_file, train_hash_file, train_sampler_params, collate_fn=lambda x: x)
 val_data_module = ProteinDataModule(csv_file, val_hash_file, val_sampler_params, collate_fn=lambda x: x)
 model_module = ProteinTrainModule(**loop_params, **hyper_params, use_saved_reps_logs_dir=precomputed_dir, 
                                   output_dir=output_dir_ver, use_flash=USE_FA, distillation_loss=DistillationLoss())
-
+print("Initializing trainer")
 # initialize trainer
 trainer = pl.Trainer(
     **trainer_params,
     logger=tb_logger,
     devices=DEVICES,
+
+    num_nodes=WORLD_SIZE,
     accelerator="gpu",
     strategy="ddp_find_unused_parameters_true",
     enable_progress_bar=True,  
@@ -125,6 +135,7 @@ trainer = pl.Trainer(
         filename="checkpoint_{epoch}_{step}")])
 
 # run training
+print("Running_training")
 train_data_module.setup()
 val_data_module.setup()
 trainer.fit(model_module, train_dataloaders=train_data_module.dataloader(), val_dataloaders=val_data_module.dataloader())

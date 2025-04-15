@@ -40,7 +40,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.max_len = max_len
         self.max_batch_tokens = max_batch_tokens or float('inf')
         self.max_batch_size = (max_batch_size + 1) if max_batch_size is not None else float('inf')
-        self.max_batch_num = max_batch_num if max_batch_num is not None else float('inf')
+        self.max_batch_num = max_batch_num if max_batch_num is not False else float('inf')
         self.shuffle = shuffle
         self.shuffle_batch_order = shuffle_batch_order
         self.seed = seed
