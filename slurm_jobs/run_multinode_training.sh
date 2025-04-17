@@ -10,7 +10,7 @@
 #SBATCH --error=training_error.log
 
 
-MASTER_PORT=29540
+MASTER_PORT=29200
 
 # 1) Extract the real head node name
 read -r head_node <<< "$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)"
@@ -18,10 +18,11 @@ read -r head_node <<< "$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)
 read -r head_ip <<< "$(srun --nodes=1 --ntasks=1 -w $head_node hostname --ip-address)"
 
 # launch one torchrun_slurm on each node via srun
-srun torchrun \
+srun torchrun_slurm \
      --rdzv_backend=c10d \
      --rdzv_id=$SLURM_JOB_ID \
      --rdzv_endpoint=${head_ip}:${MASTER_PORT} \
      --rdzv_id=${SLURM_JOB_ID} \
      /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
               --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml
+              
