@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 class DynamicTaxonIdSampler(Sampler):
-    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=128, min_len=0, max_len=1024, max_batch_num=None,
+    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=64, min_len=0, max_len=1024, max_batch_num=None,
                  max_batch_tokens=None, max_batch_size=None, shuffle=False, shuffle_batch_order=True, seed=42, drop_last=False):
         """
         A dynamic batch sampler supports DDP for robust training
