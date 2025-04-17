@@ -2,16 +2,16 @@
 csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k.csv"
 train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_train.hash"
 val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_val.hash"
-#csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
-#train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
-#val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
+#csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_half/uniref100_half/uniref100_half2.csv"
+#train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_half/uniref100_half/uniref100_half_train.hash"
+#val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_half/uniref100_half/uniref100_half_val.hash"
 
 # used for offline training - point to the dir with version ending!
 precomputed_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/test/version_0" 
 
 # define run name and master output dir!
 output_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/"
-run_name: "cloud_r1"
+run_name: "cloud_r2"
 
 # hyper params
 hyper_params:
@@ -37,18 +37,17 @@ hashing_params:
 
 # dataloader parameters
 train_sampler_params:
-  max_batch_tokens: 1000 # maximum token number per batch
-
+  max_batch_tokens: 2048 # maximum token number per batch
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
-  max_batch_num: 200  # max number of batches across all GPUs
+  max_batch_num: -1  # max number of batches across all GPUs
 
 # checkpoint parameters
 checkpoint_params:
-  every_n_epochs: 25 # save per epoch (use 'every_n_train_steps' for per batch)
+  every_n_epochs: 2 # save per epoch (use 'every_n_train_steps' for per batch)
   save_top_k: 1 # -1 if save all, or 1 to keep only the last one
 
 # extra trainer settings
 # enything here is passed to the trainer
 trainer_params:
-  max_epochs: 500 # set epoch number
+  max_epochs: 50 # set epoch number

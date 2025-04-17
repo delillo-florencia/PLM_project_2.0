@@ -27,13 +27,17 @@ def kernel_mse_alignment_loss(teacher_kernel, student_kernel):
 
     if teacher_kernel.size(0) == 1:
 
+        teacher_vec = teacher_kernel.squeeze(0)
+        student_vec = student_kernel.squeeze(0)
+
         common_dim = min(teacher_vec.shape[0], student_vec.shape[0])
         teacher_proj = nn.Linear(teacher_vec.shape[0], common_dim, bias=False).to(teacher_vec.device)
         student_proj = nn.Linear(student_vec.shape[0], common_dim, bias=False).to(student_vec.device)
+
         teacher_vec = teacher_proj(teacher_vec.unsqueeze(0)).squeeze(0)
         student_vec = student_proj(student_vec.unsqueeze(0)).squeeze(0)
-        
-        cos = nn.functional.cosine_similarity(teacher_kernel.squeeze(0), student_kernel.squeeze(0), dim=-1)
+
+        cos = nn.functional.cosine_similarity(teacher_vec, student_vec, dim=-1)
         loss = (1 - cos) ** 2
         return loss.mean()
 
