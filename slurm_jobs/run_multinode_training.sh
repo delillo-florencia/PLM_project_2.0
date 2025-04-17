@@ -19,5 +19,6 @@ master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=$master_addr
 echo "MASTER_ADDR="$MASTER_ADDR
 
-srun python /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
-              --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml
+srun torchrun --nproc_per_node=1 \
+     /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
+     --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml
