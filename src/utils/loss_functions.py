@@ -13,17 +13,8 @@ def kernel_similarity_matrix(repr):
     if isinstance(repr, list):
         repr = torch.stack([torch.tensor(k) for k in repr])  # Convert list to tensor
     
-    # If kernel is a PyTorch tensor, move it to CPU and convert to NumPy
-    # if not isinstance(kernel, torch.Tensor):
-    #     kernel = kernel.cpu().detach().numpy()  # Move to CPU and detach if needed
-    
-    #print(type(repr))  # Debugging print
-    
-    repr = torch.nn.functional.normalize(repr, p=2, dim=1)
-
+    repr = nn.functional.normalize(repr, p=2, dim=1)
     cosine_similarity_matrix = torch.mm(repr, repr.T)
-
-    #print(cosine_similarity_matrix.shape)
 
     return cosine_similarity_matrix
 
@@ -31,18 +22,22 @@ def kernel_mse_alignment_loss(teacher_kernel, student_kernel):
     """
     Calculates the MSE kernel alignment loss between teacher and student
     """
-    #print("zero")
-    kernel_similarity_matrix(teacher_kernel)
-    #print("zero")
-    teacher_matrix = torch.tensor(kernel_similarity_matrix(teacher_kernel))
-    #print("zero")
-    student_matrix = torch.tensor(kernel_similarity_matrix(student_kernel))
-    #print("zero")
+    teacher_kernel = torch.stack(teacher_kernel) if isinstance(teacher_kernel, list) else teacher_kernel
+    student_kernel = torch.stack(student_kernel) if isinstance(student_kernel, list) else student_kernel
 
-    if teacher_matrix.shape != student_matrix.shape:
-        teacher_matrix, student_matrix = pad_to_match(teacher_matrix, student_matrix)
+    if teacher_kernel.size(0) == 1:
+        cos = nn.functional.cosine_similarity(teacher_kernel.squeeze(0), student_kernel.squeeze(0), dim=-1)
+        loss = (1 - cos) ** 2
+        return loss.mean()
 
-    return mse_loss(teacher_matrix, student_matrix)
+    else:
+        teacher_matrix = kernel_similarity_matrix(teacher_kernel)
+        student_matrix = kernel_similarity_matrix(student_kernel)
+        mask = ~torch.eye(teacher_matrix.size(0), dtype=torch.bool, device=teacher_matrix.device)
+        teacher_matrix = teacher_matrix[mask]
+        student_matrix = student_matrix[mask]
+
+        return mse_loss(teacher_matrix, student_matrix)
 
 def logits_mse_loss(teacher_logits, student_logits):
     """
@@ -60,9 +55,7 @@ class DistillationLoss(nn.Module):
     def forward(self, teacher_rep, teacher_logits, student_rep, student_logits):
 
         alignment_loss = kernel_mse_alignment_loss(teacher_rep, student_rep)
-
         logits_loss = logits_mse_loss(teacher_logits, student_logits)
-
         total_loss = self.weight_rep * alignment_loss + self.weight_logits * logits_loss
 
         return total_loss, alignment_loss, logits_loss

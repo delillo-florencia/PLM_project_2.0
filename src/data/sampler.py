@@ -40,7 +40,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.max_len = max_len
         self.max_batch_tokens = max_batch_tokens or float('inf')
         self.max_batch_size = (max_batch_size + 1) if max_batch_size is not None else float('inf')
-        self.max_batch_num = max_batch_num if max_batch_num is not False else float('inf')
+        self.max_batch_num = max_batch_num if max_batch_num != -1 else float('inf')
         self.shuffle = shuffle
         self.shuffle_batch_order = shuffle_batch_order
         self.seed = seed
@@ -61,15 +61,14 @@ class DynamicTaxonIdSampler(Sampler):
     def set_epoch(self, epoch):
         self.__epoch = epoch
         # If max_batch_num is set and fixed_batches is already computed, reuse them
-        if self.max_batch_num != float('inf') and self.fixed_batches is not None:
+        if self.fixed_batches is not None:
             rng = np.random.default_rng(self.seed + self.__epoch)
             permuted_order = rng.permutation(len(self.fixed_batches))
             self.__batches = [self.fixed_batches[i] for i in permuted_order]
             self.__per_gpu_batch_num = math.ceil(len(self.__batches) / self.num_replicas)
         else:
             batches = self._prepare_batches()
-            if self.max_batch_num != float('inf'):
-                self.fixed_batches = batches.copy()  # Save the truncated list for reuse
+            self.fixed_batches = batches.copy()
             self.__batches = batches
 
     def _is_full(self, tokens, batch):

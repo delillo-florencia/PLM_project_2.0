@@ -39,6 +39,7 @@ torch.cuda.set_device(LOCAL_RANK)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str, required=True, help="Path to YAML config")
+parser.add_argument("--progress_bar", type=bool, default=True, help="Enable progress bar (True/False)")
 args = parser.parse_args()
 
 with open(args.config) as f:
@@ -63,17 +64,17 @@ hyper_params = cfg["hyper_params"]
 
 # ---------------------- TRAINING ----------------------
 
-#hot fix here !!!
-if train_sampler_params["max_batch_tokens"] is not False:
-    val_max_batch_num = int(train_sampler_params["max_batch_num"] * hashing_params["val_size_ratio"] / hashing_params["train_size_ratio"])
+# unlimited batches scenario (using whole datalaoder)
+if train_sampler_params["max_batch_num"] != -1:
+    val_batch_num = int(train_sampler_params["max_batch_num"] * hashing_params["val_size_ratio"] / hashing_params["train_size_ratio"])
 else:
-    val_max_batch_num = None
+    val_batch_num = -1
 
 # infere fixed validation dataloader params
 val_sampler_params = {
     "max_batch_tokens": train_sampler_params["max_batch_tokens"],
     "shuffle": False, "shuffle_batch_order": False,
-    "max_batch_num": val_max_batch_num}
+    "max_batch_num": val_batch_num}
 val_sampler_params["num_replicas"] = DEVICES
 val_sampler_params["rank"] = RANK
 train_sampler_params["num_replicas"] = DEVICES
@@ -126,7 +127,7 @@ trainer = pl.Trainer(
     num_nodes=WORLD_SIZE,
     accelerator="gpu",
     strategy="ddp_find_unused_parameters_true",
-    enable_progress_bar=True,  
+    enable_progress_bar=args.progress_bar,  
     enable_model_summary=True,
     use_distributed_sampler=False,
     precision="bf16-mixed" if torch.cuda.is_bf16_supported() else 32,
