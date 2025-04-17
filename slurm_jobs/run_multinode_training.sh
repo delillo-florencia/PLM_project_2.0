@@ -19,6 +19,5 @@ srun torchrun_slurm \
      --rdzv_id=$SLURM_JOB_ID \
      --rdzv_endpoint=${MASTER_ADDR}:${MASTER_PORT} \
      --rdzv_id=${SLURM_JOB_ID} \
-     --rdzv_configs="join_timeout=1800,last_call_timeout=60" \
      /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
               --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml
