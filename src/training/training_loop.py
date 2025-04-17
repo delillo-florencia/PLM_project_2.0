@@ -29,10 +29,10 @@ except ImportError:
 
 RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
-LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
+#LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
 DEVICES = torch.cuda.device_count()
 torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
-torch.cuda.set_device(LOCAL_RANK)
+torch.cuda.set_device(RANK)
 
 
 
@@ -83,7 +83,7 @@ train_sampler_params["rank"] = RANK
 print("Creating output files..")
 # create output files
 version_file = os.path.join(output_dir, run_name, ".version")
-if int(os.getenv("LOCAL_RANK", 0)) == 0:
+if int(os.getenv("RANK", 0)) == 0:
     run_name = datetime.today().strftime('%Y%m%d-%H%M%S') if run_name is None else run_name
     output_dir_ver, version = get_latest_version(output_dir, run_name)
     checkpoint_dir = os.path.join(output_dir_ver, 'checkpoints')
