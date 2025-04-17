@@ -29,10 +29,10 @@ except ImportError:
 
 RANK = int(os.environ.get("SLURM_PROCID", 0))
 WORLD_SIZE = int(os.environ.get("SLURM_NTASKS", 1))
-#LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
+LOCAL_RANK = int(os.environ.get("SLURM_LOCALID", 0))
 DEVICES = torch.cuda.device_count()
 torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
-torch.cuda.set_device(RANK)
+torch.cuda.set_device(LOCAL_RANK)
 
 
 
