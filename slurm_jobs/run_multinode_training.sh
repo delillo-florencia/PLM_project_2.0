@@ -9,19 +9,15 @@
 #SBATCH --output=training_output.log
 #SBATCH --error=training_error.log
 
+export MASTER_PORT=12340
+export WORLD_SIZE=4
 
-MASTER_PORT=29500
+### get the first node name as master address - customized for vgg slurm
+### e.g. master(gnodee[2-5],gnoded1) == gnodee2
+echo "NODELIST="${SLURM_NODELIST}
+master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_ADDR=$master_addr
+echo "MASTER_ADDR="$MASTER_ADDR
 
-# 1) Extract the real head node name
-read -r head_node <<< "$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)"
-# 2) Resolve it to an IP that all nodes can actually connect to
-read -r head_ip <<< "$(srun --nodes=1 --ntasks=1 -w $head_node hostname --ip-address)"
-
-# launch one torchrun_slurm on each node via srun
-srun torchrun_slurm \
-     --rdzv_backend=c10d \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_endpoint=${head_ip}:${MASTER_PORT} \
-     --rdzv_id=${SLURM_JOB_ID} \
-     /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
+srun python /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
               --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml
