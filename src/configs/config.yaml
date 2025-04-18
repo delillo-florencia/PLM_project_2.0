@@ -39,7 +39,8 @@ hashing_params:
 train_sampler_params:
   max_batch_tokens: 1000 # 2048 # maximum token number per batch
   #max_batch_size: 2
-  drop_last: True
+  drop_last: true
+  log_batch_shape: false
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
   max_batch_num: 200 #-1  # max number of batches across all GPUs
