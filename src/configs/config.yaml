@@ -22,6 +22,7 @@ loop_params:
   student_model_param: "150M" # student model
   teacher_model_param: "3B" # teacher model
   save_masked_sequences: false # should tensor masking of seqeunces be saved
+  log_batch_shape: true # extra per batch logging
   # should we use precomputed reps and logits?
   use_saved_reps_logs: false
   # save representations and logits per batch (only first epoch)
@@ -39,7 +40,6 @@ hashing_params:
 train_sampler_params:
   max_batch_tokens: 12288 # maximum token number per batch
   drop_last: true
-  log_batch_shape: true
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
   max_batch_num: 200 #-1  # max number of batches across all GPUs
