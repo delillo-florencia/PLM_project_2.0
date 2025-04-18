@@ -73,13 +73,18 @@ else:
 
 # infere fixed validation dataloader params
 val_sampler_params = {
-    "max_batch_tokens": train_sampler_params["max_batch_tokens"],
     "shuffle": False, "shuffle_batch_order": False,
     "max_batch_num": val_batch_num}
 val_sampler_params["num_replicas"] = DEVICES
 val_sampler_params["rank"] = RANK
 train_sampler_params["num_replicas"] = DEVICES
 train_sampler_params["rank"] = RANK
+
+if "max_batch_tokens" in train_sampler_params:
+    val_sampler_params["max_batch_tokens"] = train_sampler_params["max_batch_tokens"]
+if "max_batch_size" in train_sampler_params:
+    val_sampler_params["max_batch_size"] = train_sampler_params["max_batch_size"]
+    
 print("Creating output files..")
 # create output files
 version_file = os.path.join(output_dir, run_name, ".version")
@@ -96,7 +101,7 @@ if int(os.getenv("RANK", 0)) == 0:
     print(f"Run Tensorbord: 'tensorboard --logdir={output_dir}'")
     print("Using mixed bf16-matmul precision." if torch.cuda.is_bf16_supported() else "Using true precision.")
     print("Flash attention will be used." if USE_FA else "No flash attention installed.")
-    print("Max batches for val: ", val_sampler_params["max_batch_num"], ", test: ", train_sampler_params["max_batch_num"], " ,devices: ", DEVICES, sep="")
+    print("Max batches for val: ", val_sampler_params["max_batch_num"], ", test: ", train_sampler_params["max_batch_num"], sep="")
     print("================")
 else:
     while not os.path.exists(version_file):
@@ -107,7 +112,7 @@ else:
 
 print("TensorLoger")
 # turn on tensorboard for convenience
-tb_logger = TensorBoardLogger(output_dir, name=run_name, version=version, default_hp_metric=True)
+tb_logger = TensorBoardLogger(output_dir, name=run_name, version=version, default_hp_metric=False)
 
 # get proper output dir and store hparams
 tb_logger.log_hyperparams(hyper_params)
@@ -124,7 +129,6 @@ trainer = pl.Trainer(
     **trainer_params,
     logger=tb_logger,
     devices=DEVICES,
-
     num_nodes=WORLD_SIZE,
     accelerator="gpu",
     strategy="ddp_find_unused_parameters_true",
