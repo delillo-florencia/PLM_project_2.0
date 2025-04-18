@@ -16,7 +16,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for mo
 class ProteinTrainModule(pl.LightningModule):
     def __init__(self, student_model_param, teacher_model_param, distillation_loss, 
                  save_per_batch, use_saved_reps_logs, use_saved_reps_logs_dir, learning_rate,
-                 output_dir,save_masked_sequences, save_reps_logs, use_flash, log_batch_shape=False):
+                 output_dir,save_masked_sequences, save_reps_logs, use_flash, log_batch_shape):
         super().__init__()
         self.student_model = ModelSelector(student_model_param, use_flash).model
         self.teacher_model = ModelSelector(teacher_model_param, use_flash).model
