@@ -42,7 +42,7 @@ class ProteinTrainModule(pl.LightningModule):
         # temproary
         if dist.is_initialized():
             rank = dist.get_rank()
-            shapes = [x.shape for x in batch if hasattr(x, 'shape')]
+            shapes = [len(x) for x in batch]
             print(f"[Rank {rank}] Batch shapes: {shapes}")
 
         #  masking 

@@ -37,8 +37,8 @@ hashing_params:
 
 # dataloader parameters
 train_sampler_params:
-  #max_batch_tokens: 2048 # maximum token number per batch
-  max_batch_size: 2
+  max_batch_tokens: 1000 # 2048 # maximum token number per batch
+  #max_batch_size: 2
   drop_last: True
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
