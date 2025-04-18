@@ -165,7 +165,7 @@ class ProteinTrainModule(pl.LightningModule):
             lengths = [sample.length for sample in batch]
             taxon_ids = [sample.taxon_id for sample in batch]
             min_len, max_len = min(lengths), max(lengths)
-            print(f"[Rank {rank}_train] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
+            print(f"[Rank {rank}_val] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
 
         # Set teacher model to evaluation mode
         self.teacher_model.eval()
