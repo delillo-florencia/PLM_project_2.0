@@ -9,6 +9,7 @@
 #SBATCH --output=training_output.log
 #SBATCH --error=training_error.log
 
+#SBATCH --exclude=hpccluster-g2-ghpc-67
 
 MASTER_PORT=29540
 
