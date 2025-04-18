@@ -3,6 +3,7 @@ import torch
 import re
 import pytorch_lightning as pl
 import logging
+import torch.distributed as dist #temp
 from utils.model_utils import  get_seq_rep, get_logits
 from models.model_selector import ModelSelector
 from utils.token_mask import mask_batch, extract_masked_logits
@@ -37,6 +38,12 @@ class ProteinTrainModule(pl.LightningModule):
         return self.student_model(x)
 
     def training_step(self, batch, batch_idx):
+
+        # temproary
+        if dist.is_initialized():
+            rank = dist.get_rank()
+            shapes = [x.shape for x in batch if hasattr(x, 'shape')]
+            print(f"[Rank {rank}] Batch shapes: {shapes}")
 
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
