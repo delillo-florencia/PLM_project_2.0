@@ -16,7 +16,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.INFO)  # or DEBUG for mo
 class ProteinTrainModule(pl.LightningModule):
     def __init__(self, student_model_param, teacher_model_param, distillation_loss, 
                  save_per_batch, use_saved_reps_logs, use_saved_reps_logs_dir, learning_rate,
-                 output_dir,save_masked_sequences, save_reps_logs, use_flash):
+                 output_dir,save_masked_sequences, save_reps_logs, use_flash, log_batch_shape=False):
         super().__init__()
         self.student_model = ModelSelector(student_model_param, use_flash).model
         self.teacher_model = ModelSelector(teacher_model_param, use_flash).model
@@ -31,6 +31,7 @@ class ProteinTrainModule(pl.LightningModule):
         self.save_per_batch = save_per_batch
         self.learning_rate = learning_rate
         self.use_saved_reps_logs_dir = use_saved_reps_logs_dir if use_saved_reps_logs else None
+        self.log_batch_shape = log_batch_shape
         self.validation_step_outputs = []
         self.training_step_outputs = []
     
@@ -40,13 +41,13 @@ class ProteinTrainModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
 
         # dataloader debugging for multi rank
-        if dist.is_initialized():
+        if self.log_batch_shape and dist.is_initialized():
             rank = dist.get_rank()
             batch_size = len(batch)
             lengths = [sample.length for sample in batch]
             taxon_ids = [sample.taxon_id for sample in batch]
             min_len, max_len = min(lengths), max(lengths)
-            print(f"[Rank {rank}] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
+            print(f"[Rank {rank}_train] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
 
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
@@ -108,9 +109,9 @@ class ProteinTrainModule(pl.LightningModule):
         # compute loss and store loss
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
         self.training_step_outputs.append({
-            "train_loss": loss,
-            "train_reps_loss": rep_loss,
-            "train_logi_loss": log_loss})
+            "train_loss": loss.detach(),
+            "train_reps_loss": rep_loss.detach(),
+            "train_logi_loss": log_loss.detach()})
 
         #output directories for saving logits and representations per batch
         if self.local_rank == 0 and self.current_epoch == 0 and self.save_reps_logs:
@@ -128,6 +129,9 @@ class ProteinTrainModule(pl.LightningModule):
             self.log("train_step_reps_loss", rep_loss, on_step=True, on_epoch=False, prog_bar=False, sync_dist=True)
             self.log("train_step_logi_loss", log_loss, on_step=True, on_epoch=False, prog_bar=False, sync_dist=True)
 
+        del teacher_res, student_res, teacher_reps, student_reps, teacher_logits, student_logits
+        del masked_tokens, unmasked_tokens, masked_inputs, unmasked_inputs
+        torch.cuda.empty_cache()
         return loss
 
 
@@ -149,9 +153,20 @@ class ProteinTrainModule(pl.LightningModule):
 
         # clear outputs list for the next epoch
         self.training_step_outputs.clear()
+        torch.cuda.empty_cache()
 
     
     def validation_step(self, batch, batch_idx):
+
+        # dataloader debugging for multi rank
+        if self.log_batch_shape and dist.is_initialized():
+            rank = dist.get_rank()
+            batch_size = len(batch)
+            lengths = [sample.length for sample in batch]
+            taxon_ids = [sample.taxon_id for sample in batch]
+            min_len, max_len = min(lengths), max(lengths)
+            print(f"[Rank {rank}_train] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
+
         # Set teacher model to evaluation mode
         self.teacher_model.eval()
 
@@ -187,9 +202,9 @@ class ProteinTrainModule(pl.LightningModule):
         # compute and store loss
         loss, rep_loss, log_loss = self.distillation_loss(teacher_reps, teacher_logits, student_reps, student_logits)
         self.validation_step_outputs.append({
-            "val_loss": loss,
-            "val_reps_loss": rep_loss,
-            "val_logi_loss": log_loss})
+            "val_loss": loss.detach(),
+            "val_reps_loss": rep_loss.detach(),
+            "val_logi_loss": log_loss.detach()})
         
         # Log per step metrics if desired
         if self.save_per_batch:
@@ -198,6 +213,9 @@ class ProteinTrainModule(pl.LightningModule):
             self.log("val_step_reps_loss", rep_loss, on_step=True, on_epoch=False, prog_bar=False, batch_size=len(batch), sync_dist=True)
             self.log("val_step_logi_loss", log_loss, on_step=True, on_epoch=False, prog_bar=False, batch_size=len(batch), sync_dist=True)
             
+        del teacher_res, student_res, teacher_reps, student_reps, teacher_logits, student_logits
+        del masked_tokens, unmasked_tokens, masked_inputs, unmasked_inputs
+        torch.cuda.empty_cache()
         return {"val_loss": loss, "val_reps_loss": rep_loss, "val_logi_loss": log_loss}
     
 
@@ -215,4 +233,5 @@ class ProteinTrainModule(pl.LightningModule):
 
         # Clear the stored outputs for the next epoch
         self.validation_step_outputs.clear()
+        torch.cuda.empty_cache()
 
