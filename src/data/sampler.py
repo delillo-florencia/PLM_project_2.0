@@ -117,9 +117,9 @@ class DynamicTaxonIdSampler(Sampler):
                     buckets[bucket_key] = {'indices': [], 'max_len': 0}
         # process leftover samples in all buckets.
         for bucket in buckets.values():
-            
             if bucket['indices']:
-                batches.append(bucket['indices'])
+                if not self.drop_last or len(bucket['indices']) >= self.max_batch_size:
+                    batches.append(bucket['indices'])
         # make sure the number of butches works for DDP
         random.seed(self.seed + self.__epoch)
         per_gpu = math.ceil(len(batches) / self.num_replicas)
@@ -142,6 +142,22 @@ class DynamicTaxonIdSampler(Sampler):
             per_gpu = total // self.num_replicas
         else:
             per_gpu = math.ceil(len(batches) / self.num_replicas)
+
+        if self.max_batch_size != float('inf'):
+            padded_batches = []
+            for batch in batches:
+                batch_len = len(batch)
+                if batch_len < self.max_batch_size:
+                    pad_count = self.max_batch_size - batch_len
+                    # Duplicate real samples from the same batch
+                    padded = batch + random.choices(batch, k=pad_count)
+                    padded_batches.append(padded)
+                elif batch_len > self.max_batch_size:
+                    # This should rarely happen, but just clip to max_batch_size
+                    padded_batches.append(batch[:self.max_batch_size])
+                else:
+                    padded_batches.append(batch)
+            batches = padded_batches
     
         self.__per_gpu_batch_num = per_gpu
         return batches
