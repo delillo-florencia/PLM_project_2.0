@@ -11,11 +11,11 @@ precomputed_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/test/version_0
 
 # define run name and master output dir!
 output_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/"
-run_name: "cloud_r2"
+run_name: "cloud_r3"
 
 # hyper params
 hyper_params:
-  learning_rate: 0.0001819
+  learning_rate: 0.001819
 
 # training parameters
 loop_params:
@@ -37,8 +37,7 @@ hashing_params:
 
 # dataloader parameters
 train_sampler_params:
-  max_batch_tokens: 1000 # 2048 # maximum token number per batch
-  #max_batch_size: 2
+  max_batch_tokens: 12288 # maximum token number per batch
   drop_last: true
   log_batch_shape: true
   shuffle: false # all samples before bucketing
