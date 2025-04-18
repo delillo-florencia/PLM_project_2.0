@@ -47,7 +47,7 @@ class ProteinTrainModule(pl.LightningModule):
             lengths = [sample.length for sample in batch]
             taxon_ids = [sample.taxon_id for sample in batch]
             min_len, max_len = min(lengths), max(lengths)
-            print(f"[Rank {rank}] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
+            print(f"[Rank {rank}_train] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
 
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
@@ -157,6 +157,16 @@ class ProteinTrainModule(pl.LightningModule):
 
     
     def validation_step(self, batch, batch_idx):
+
+        # dataloader debugging for multi rank
+        if self.log_batch_shape and dist.is_initialized():
+            rank = dist.get_rank()
+            batch_size = len(batch)
+            lengths = [sample.length for sample in batch]
+            taxon_ids = [sample.taxon_id for sample in batch]
+            min_len, max_len = min(lengths), max(lengths)
+            print(f"[Rank {rank}_train] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
+
         # Set teacher model to evaluation mode
         self.teacher_model.eval()
 
