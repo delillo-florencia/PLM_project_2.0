@@ -39,11 +39,14 @@ class ProteinTrainModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        # temproary
+        # dataloader debugging for multi rank
         if dist.is_initialized():
             rank = dist.get_rank()
-            shapes = [len(x) for x in batch]
-            print(f"[Rank {rank}] Batch shapes: {shapes}")
+            batch_size = len(batch)
+            lengths = [sample.length for sample in batch]
+            taxon_ids = [sample.taxon_id for sample in batch]
+            min_len, max_len = min(lengths), max(lengths)
+            print(f"[Rank {rank}] Batch {batch_idx}: size={batch_size}, len=({min_len}-{max_len}), taxon_ids={set(taxon_ids)}")
 
         #  masking 
         masked_results = mask_batch(batch, batch_idx, self.current_epoch)
