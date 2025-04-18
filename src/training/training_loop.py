@@ -75,9 +75,9 @@ else:
 val_sampler_params = {
     "shuffle": False, "shuffle_batch_order": False,
     "max_batch_num": val_batch_num}
-val_sampler_params["num_replicas"] = DEVICES
+val_sampler_params["num_replicas"] = WORLD_SIZE
 val_sampler_params["rank"] = RANK
-train_sampler_params["num_replicas"] = DEVICES
+train_sampler_params["num_replicas"] = WORLD_SIZE
 train_sampler_params["rank"] = RANK
 
 if "max_batch_tokens" in train_sampler_params:
