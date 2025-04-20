@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=plm_train
 #SBATCH --partition=g2
-#SBATCH --nodes=4                   
+#SBATCH --nodes=60                   
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
