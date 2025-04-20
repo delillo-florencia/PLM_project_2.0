@@ -18,6 +18,8 @@ read -r head_node <<< "$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n
 # 2) Extract the first external IP from that node
 read -r head_ip <<< "$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname -I | awk '{print $1}')"
 
+export OMP_NUM_THREADS=4
+
 # Launch
 srun torchrun \
      --nnodes=$SLURM_JOB_NUM_NODES \
