@@ -2,12 +2,13 @@
 #csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all.csv"
 #train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_train.hash"
 #val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_val.hash"
-csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
+train_csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
+val_csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
 
 # used for offline training - point to the dir with version ending!
-precomputed_dir: "/home/developer/workspace/PLM_project_2.0/outputs/kacper_gen_reps2/version_4" 
+precomputed_dir: "/home/developer/workspace/PLM_project_2.0/outputs/kacper_gen_reps2/version_29" 
 
 # define run name and master output dir!
 output_dir: "/home/developer/workspace/PLM_project_2.0/outputs/"

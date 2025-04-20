@@ -2,8 +2,9 @@
 #csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all.csv"
 #train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_train.hash"
 #val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_all/uniref100_all_val.hash"
-csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
+train_csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
+val_csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
 
 # used for offline training - point to the dir with version ending!
@@ -22,6 +23,7 @@ loop_params:
   student_model_param: "8M" # student model
   teacher_model_param: "150M" # teacher model
   save_masked_sequences: false # should tensor masking of seqeunces be saved
+  log_batch_shape: false
   # should we use precomputed reps and logits?
   use_saved_reps_logs: false
   # save representations and logits per batch (only first epoch)

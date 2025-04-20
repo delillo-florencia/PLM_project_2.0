@@ -26,5 +26,6 @@ srun torchrun \
      --rdzv_endpoint=${head_ip}:${MASTER_PORT} \
      --rdzv_id=${SLURM_JOB_ID} \
      /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
-     --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml
+          --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml \
+          --disable_progress_bar
      

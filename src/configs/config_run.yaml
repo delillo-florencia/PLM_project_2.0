@@ -1,7 +1,8 @@
 # define input data sources
-csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_half/uniref100_half.csv"
-train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_half/uniref100_half_train.hash"
-val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_half/uniref100_half_val.hash"
+train_csv_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.csv"
+train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.hash"
+val_csv_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.csv"
+val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.hash"
 #csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 #train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
 #val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
@@ -11,11 +12,11 @@ precomputed_dir: "/home/developer/workspace/PLM_project_2.0/outputs/test/version
 
 # define run name and master output dir!
 output_dir: "/home/developer/workspace/PLM_project_2.0/outputs/"
-run_name: "650-8_r2"
+run_name: "650-8_r2_q2-3"
 
 # hyper params
 hyper_params:
-  learning_rate: 0.0001819
+  learning_rate: 0.001819
 
 # training parameters
 loop_params:
@@ -37,17 +38,17 @@ hashing_params:
 
 # dataloader parameters
 train_sampler_params:
-  max_batch_tokens: 4096 # maximum token number per batch
+  max_batch_tokens: 4096 # TESTED ON PLM2 DO NOT CHANGE
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
   max_batch_num: -1 # max number of batches across all GPUs
 
 # checkpoint parameters
 checkpoint_params:
-  every_n_epochs: 10 # save per epoch (use 'every_n_train_steps' for per batch)
+  every_n_epochs: 1 # save per epoch (use 'every_n_train_steps' for per batch)
   save_top_k: 1 # -1 if save all, or 1 to keep only the last one
 
 # extra trainer settings
 # enything here is passed to the trainer
 trainer_params:
-  max_epochs: 500 # set epoch number
+  max_epochs: 5 # set epoch number
