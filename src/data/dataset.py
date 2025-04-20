@@ -16,9 +16,9 @@ class HashedProteinDataset(Dataset):
         with open(hashed_data_path, 'rb') as f:
             data = pickle.load(f)
         self.header = data['header']
-        self.line_offsets = data['line_offsets']
+        self.line_offsets = data['offsets'] if 'offsets' in data else data['line_offsets']
         self.lengths = data['lengths']
-        self.taxon_ids = data['taxon_ids']
+        self.taxon_ids = data['tax_ids'] if 'tax_ids' in data else data['taxon_ids']
         self.csv_file = csv_file
         self._file_handle = None
 

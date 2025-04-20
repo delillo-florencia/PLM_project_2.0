@@ -1,7 +1,9 @@
-from faesm.esm import FAEsmForMaskedLM
-from faesm import *
-from esm import Alphabet
-
+import contextlib
+import io
+_f = io.StringIO()
+with contextlib.redirect_stdout(_f), contextlib.redirect_stderr(_f):
+    from faesm.esm import FAEsmForMaskedLM
+    from faesm import *
 
 
 class ModelSelector:
@@ -20,6 +22,4 @@ class ModelSelector:
         except KeyError:
             raise ValueError(param_size)
         self.model = FAEsmForMaskedLM.from_pretrained(model_info["model_name"], use_fa=use_fa)
-        self.alphabet = Alphabet.from_architecture("ESM-1") #unused
-        print("Model selected correctly")
 

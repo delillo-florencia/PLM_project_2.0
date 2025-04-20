@@ -3,10 +3,16 @@ import random
 import torch
 import math
 import numpy as np
-from tqdm import tqdm
+import sys
+from tqdm import tqdm as _tqdm
+
+# disable dynamic bars if not a terminal (or force-leave short final line)
+def tqdm(*args, **kwargs):
+    disable = not sys.stdout.isatty()
+    return _tqdm(*args, disable=disable, leave=False, **kwargs)
 
 class DynamicTaxonIdSampler(Sampler):
-    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, num_buckets=64, min_len=0, max_len=1024, max_batch_num=None,
+    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, id_str, num_buckets=64, min_len=0, max_len=1024, max_batch_num=None,
                  max_batch_tokens=None, max_batch_size=None, shuffle=False, shuffle_batch_order=True, seed=42, drop_last=False):
         """
         A dynamic batch sampler supports DDP for robust training
@@ -32,7 +38,7 @@ class DynamicTaxonIdSampler(Sampler):
         """
         super().__init__(None)
         self.num_replicas = num_replicas
-        self.rank = rank # FIX RANK TO AUTO-MODE
+        self.rank = rank
         self.seq_lengths = seq_lengths
         self.taxon_ids = taxon_ids
         self.num_buckets = num_buckets
@@ -46,6 +52,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.seed = seed
         self.drop_last = drop_last
         self.fixed_batches = None
+        self.id = id_str
         self.__epoch = 0
         self.__per_gpu_batch_num = 0
         self.__batches = []
@@ -86,7 +93,7 @@ class DynamicTaxonIdSampler(Sampler):
 
         batches = []
         buckets = {}  # key: (taxon_id, length_bucket)
-        for idx in tqdm(indices, desc="Processing batches", unit="sample"):
+        for idx in tqdm(indices, desc=f"[rank {self.rank}] Processing {self.id} batches", position=self.rank, unit="samples"):
 
             length = self.seq_lengths[idx]
             taxon_id = self.taxon_ids[idx]
