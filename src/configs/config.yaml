@@ -44,7 +44,7 @@ train_sampler_params:
   drop_last: true
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
-  max_batch_num: -1  # max number of batches across all GPUs
+  max_batch_num: 200 #-1  # max number of batches across all GPUs # ADJUST AFTER TESTING
 
 # checkpoint parameters
 checkpoint_params:
@@ -54,4 +54,4 @@ checkpoint_params:
 # extra trainer settings
 # enything here is passed to the trainer
 trainer_params:
-  max_epochs: 50 # set epoch number
+  max_epochs: 250 # set epoch number
