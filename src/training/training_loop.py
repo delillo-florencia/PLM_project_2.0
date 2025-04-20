@@ -88,7 +88,7 @@ if int(os.getenv("RANK", 0)) == 0:
     print("Using mixed bf16-matmul precision." if torch.cuda.is_bf16_supported() else "Using true precision.")
     print("Flash attention will be used." if USE_FA else "No flash attention installed.")
     print("Max batches for val: ", val_sampler_params["max_batch_num"], ", test: ", train_sampler_params["max_batch_num"], sep="")
-    print(f"OMP_NUM_THREADS set to {os.environ['OMP_NUM_THREADS']}. Using {int(os.environ['OMP_NUM_THREADS'])*WORLD_SIZE} cores out of {os.cpu_count()} in the system.")
+    print(f"OMP_NUM_THREADS set to {os.environ['OMP_NUM_THREADS']}. Using {int(os.environ['OMP_NUM_THREADS'])*WORLD_SIZE} cores out of {os.cpu_count()*NODES} in the system.")
 else:
     version_file = os.path.join(output_dir, run_name, ".version")
     while not os.path.exists(version_file):

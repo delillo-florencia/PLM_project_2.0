@@ -1,19 +1,19 @@
 ##define input data sources
-train_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k.csv"
-train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_train.hash"
-val_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k.csv"
-val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_val.hash"
-#train_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.csv"
-#train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.hash"
-#val_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.csv"
-#val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.hash"
+#train_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k.csv"
+#train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_train.hash"
+#val_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k.csv"
+#val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/uniref100_500k_val.hash"
+train_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.csv"
+train_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.hash"
+val_csv_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.csv"
+val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.hash"
 
 # used for offline training - point to the dir with version ending!
 precomputed_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/test/version_0" 
 
 # define run name and master output dir!
 output_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/"
-run_name: "cloud_r3"
+run_name: "cloud_r4"
 
 # hyper params
 hyper_params:
@@ -44,11 +44,11 @@ train_sampler_params:
   drop_last: true
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
-  max_batch_num: 200 #-1  # max number of batches across all GPUs # ADJUST AFTER TESTING
+  max_batch_num: -1  # max number of batches across all GPUs
 
 # checkpoint parameters
 checkpoint_params:
-  every_n_epochs: 1 # save per epoch (use 'every_n_train_steps' for per batch)
+  every_n_epochs: 10 # save per epoch (use 'every_n_train_steps' for per batch)
   save_top_k: 1 # -1 if save all, or 1 to keep only the last one
 
 # extra trainer settings

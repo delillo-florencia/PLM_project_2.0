@@ -3,8 +3,9 @@ train_csv_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref10
 train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.hash"
 val_csv_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.csv"
 val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.hash"
-#csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
+#train_csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 #train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_train.hash"
+#val_csv_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k.csv"
 #val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/uniref100_500k/uniref100_500k_val.hash"
 
 # used for offline training - point to the dir with version ending!
