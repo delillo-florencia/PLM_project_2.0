@@ -28,24 +28,24 @@ except ImportError:
 
 # --------------------- GLOBALS ---------------------
 
-# DEVICES = torch.cuda.device_count()
-# RANK = int_env("SLURM_PROCID", "RANK", default=0)
-# WORLD_SIZE = int_env("SLURM_NTASKS", "WORLD_SIZE", default=1)
-# LOCAL_WORLD_SIZE = int_env("LOCAL_WORLD_SIZE", default=torch.cuda.device_count())
-# LOCAL_RANK = int_env("SLURM_LOCALID", "LOCAL_RANK", default=0)
-# NODES = WORLD_SIZE // LOCAL_WORLD_SIZE
-# torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
-# torch.cuda.set_device(LOCAL_RANK)
-
-RANK        = int_env("RANK",        "SLURM_PROCID", default=0)
-WORLD_SIZE  = int_env("WORLD_SIZE",  "SLURM_NTASKS", default=1)
-LOCAL_RANK  = int_env("LOCAL_RANK",  "SLURM_LOCALID", default=0)
-DEVICES     = torch.cuda.device_count()
-
+DEVICES = torch.cuda.device_count()
+RANK = int_env("SLURM_PROCID", "RANK", default=0)
+WORLD_SIZE = int_env("SLURM_NTASKS", "WORLD_SIZE", default=1)
 LOCAL_WORLD_SIZE = int_env("LOCAL_WORLD_SIZE", default=torch.cuda.device_count())
+LOCAL_RANK = int_env("SLURM_LOCALID", "LOCAL_RANK", default=0)
 NODES = WORLD_SIZE // LOCAL_WORLD_SIZE
 torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
 torch.cuda.set_device(LOCAL_RANK)
+
+#RANK        = int_env("RANK",        "SLURM_PROCID", default=0)
+#WORLD_SIZE  = int_env("WORLD_SIZE",  "SLURM_NTASKS", default=1)
+#LOCAL_RANK  = int_env("LOCAL_RANK",  "SLURM_LOCALID", default=0)
+#DEVICES     = torch.cuda.device_count()
+
+#LOCAL_WORLD_SIZE = int_env("LOCAL_WORLD_SIZE", default=torch.cuda.device_count())
+#NODES = WORLD_SIZE // LOCAL_WORLD_SIZE
+#torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
+#torch.cuda.set_device(LOCAL_RANK)
 
 
 # --------------------- PARAMETERS ---------------------

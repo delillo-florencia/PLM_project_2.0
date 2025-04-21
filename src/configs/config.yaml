@@ -40,7 +40,7 @@ hashing_params:
 
 # dataloader parameters
 train_sampler_params:
-  max_batch_tokens: 2096 # TESTED ON CLOUD DO NOT CHANGE
+  max_batch_tokens: 1024 # TESTED ON CLOUD DO NOT CHANGE
   drop_last: true
   shuffle: false # all samples before bucketing
   shuffle_batch_order: true # batch order after bucketing
