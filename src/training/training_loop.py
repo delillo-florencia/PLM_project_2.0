@@ -37,16 +37,6 @@ NODES = WORLD_SIZE // LOCAL_WORLD_SIZE
 torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
 torch.cuda.set_device(LOCAL_RANK)
 
-#RANK        = int_env("RANK",        "SLURM_PROCID", default=0)
-#WORLD_SIZE  = int_env("WORLD_SIZE",  "SLURM_NTASKS", default=1)
-#LOCAL_RANK  = int_env("LOCAL_RANK",  "SLURM_LOCALID", default=0)
-#DEVICES     = torch.cuda.device_count()
-
-#LOCAL_WORLD_SIZE = int_env("LOCAL_WORLD_SIZE", default=torch.cuda.device_count())
-#NODES = WORLD_SIZE // LOCAL_WORLD_SIZE
-#torch.set_float32_matmul_precision("high" if torch.cuda.is_bf16_supported() else "highest")
-#torch.cuda.set_device(LOCAL_RANK)
-
 
 # --------------------- PARAMETERS ---------------------
 
@@ -97,7 +87,7 @@ if int(os.getenv("RANK", 0)) == 0:
     print("Using mixed bf16-matmul precision." if torch.cuda.is_bf16_supported() else "Using true precision.")
     print("Flash attention will be used." if USE_FA else "No flash attention installed.")
     print("Max batches for val: ", val_sampler_params["max_batch_num"], ", test: ", train_sampler_params["max_batch_num"], sep="")
-    print(f"OMP_NUM_THREADS set to {os.environ['OMP_NUM_THREADS']}. Using {int(os.environ['OMP_NUM_THREADS'])*WORLD_SIZE} cores out of {os.cpu_count()*NODES} in the system.")
+    #print(f"OMP_NUM_THREADS set to {os.environ['OMP_NUM_THREADS']}. Using {int(os.environ['OMP_NUM_THREADS'])*WORLD_SIZE} cores out of {os.cpu_count()*NODES} in the system.")
 else:
     version_file = os.path.join(output_dir, run_name, ".version")
     while not os.path.exists(version_file):
