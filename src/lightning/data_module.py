@@ -32,6 +32,6 @@ class ProteinDataModule(pl.LightningDataModule):
         )
         sampler.dataset = self.dataset
         sampler.set_epoch(0)  # this is here only to initialize, epochs ar eupdated with a callback, see training :)
-        return DataLoader(self.dataset, batch_sampler=sampler, collate_fn=self.collate_fn, shuffle=False, num_workers=int(os.environ["OMP_NUM_THREADS"]))
+        return DataLoader(self.dataset, batch_sampler=sampler, collate_fn=self.collate_fn, shuffle=False, num_workers=0)
 
 
