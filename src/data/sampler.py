@@ -4,12 +4,12 @@ import torch
 import math
 import numpy as np
 import sys
-from tqdm import tqdm as _tqdm
+from tqdm import tqdm as tqdm
 
 # disable dynamic bars if not a terminal (or force-leave short final line)
-def tqdm(*args, **kwargs):
-    disable = not sys.stdout.isatty()
-    return _tqdm(*args, disable=disable, leave=False, **kwargs)
+#def tqdm(*args, **kwargs):
+#    disable = not sys.stdout.isatty()
+#    return _tqdm(*args, disable=disable, leave=False, **kwargs)
 
 class DynamicTaxonIdSampler(Sampler):
     def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, id_str, num_buckets=64, min_len=0, max_len=1024, max_batch_num=None,
