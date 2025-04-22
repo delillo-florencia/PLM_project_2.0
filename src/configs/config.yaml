@@ -10,6 +10,7 @@ val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/c
 
 # used for offline training - point to the dir with version ending!
 precomputed_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/test/version_0" 
+precomputed_batches_dir: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/shred20_cluster_uniref100_q2-3"
 
 # define run name and master output dir!
 output_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/"
