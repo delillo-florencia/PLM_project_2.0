@@ -3,7 +3,10 @@ import random
 import torch
 import math
 import numpy as np
+import pickle
 import sys
+import os
+import json
 from tqdm import tqdm as tqdm
 
 # disable dynamic bars if not a terminal (or force-leave short final line)
@@ -12,7 +15,7 @@ from tqdm import tqdm as tqdm
 #    return _tqdm(*args, disable=disable, leave=False, **kwargs)
 
 class DynamicTaxonIdSampler(Sampler):
-    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, id_str, num_buckets=64, min_len=0, max_len=1024, max_batch_num=None,
+    def __init__(self, num_replicas, rank, seq_lengths, taxon_ids, id_str, precomputed_batches_dir=None, num_buckets=64, min_len=0, max_len=1024, max_batch_num=None,
                  max_batch_tokens=None, max_batch_size=None, shuffle=False, shuffle_batch_order=True, seed=42, drop_last=False):
         """
         A dynamic batch sampler supports DDP for robust training
@@ -53,6 +56,7 @@ class DynamicTaxonIdSampler(Sampler):
         self.drop_last = drop_last
         self.fixed_batches = None
         self.id = id_str
+        self.precomputed_batches = precomputed_batches_dir
         self.__epoch = 0
         self.__per_gpu_batch_num = 0
         self.__batches = []
@@ -62,21 +66,41 @@ class DynamicTaxonIdSampler(Sampler):
         return self.__per_gpu_batch_num
 
     def __iter__(self):
-        for batch in self.__batches[self.rank::self.num_replicas]:
-            yield batch
+        if self.precomputed_batches is not None and self.num_shards > 1:
+            for batch in self.__batches:
+                yield batch
+        else:
+            for batch in self.__batches[self.rank::self.num_replicas]:
+                yield batch
 
     def set_epoch(self, epoch):
         self.__epoch = epoch
+
         # If max_batch_num is set and fixed_batches is already computed, reuse them
         if self.fixed_batches is not None:
             rng = np.random.default_rng(self.seed + self.__epoch)
             permuted_order = rng.permutation(len(self.fixed_batches))
             self.__batches = [self.fixed_batches[i] for i in permuted_order]
             self.__per_gpu_batch_num = math.ceil(len(self.__batches) / self.num_replicas)
-        else:
-            batches = self._prepare_batches()
+            return
+
+        # load precomputed batches if desired
+        if self.precomputed_batches is not None:
+            path = os.path.join(self.precomputed_batches, f"batches_shard_{self.rank}.pkl")
+            print(f"[rank {self.rank}] Loaded precomputed batches.")
+            with open(path, "rb") as f:
+                batches = pickle.load(f)
             self.fixed_batches = batches.copy()
             self.__batches = batches
+            self.__per_gpu_batch_num = len(batches)
+            return
+
+        # build batches on the fly
+        batches = self._prepare_batches()
+        self.fixed_batches = batches.copy()
+        self.__batches = batches
+        self.__per_gpu_batch_num = math.ceil(len(batches) / self.num_replicas)
+
 
     def _is_full(self, tokens, batch):
         return len(batch) >= self.max_batch_size or tokens > self.max_batch_tokens
@@ -85,11 +109,11 @@ class DynamicTaxonIdSampler(Sampler):
         if self.shuffle:
             g = torch.Generator()
             g.manual_seed(self.seed + self.__epoch)
-            indices = torch.randperm(len(self.dataset), generator=g).tolist()
+            indices = torch.randperm(len(self.seq_lengths), generator=g).tolist()
         else:
             if len(self.__batches) > 0:
                 return self.__batches
-            indices = list(range(len(self.dataset)))
+            indices = list(range(len(self.seq_lengths)))
 
         batches = []
         buckets = {}  # key: (taxon_id, length_bucket)
@@ -168,3 +192,33 @@ class DynamicTaxonIdSampler(Sampler):
     
         self.__per_gpu_batch_num = per_gpu
         return batches
+
+    @staticmethod
+    def precompute_batches(out_dir, seq_lengths, taxon_ids, world_size, **sampler_kwargs):
+
+        os.makedirs(out_dir, exist_ok=True)
+
+        # 1) Build global batches
+        sampler = DynamicTaxonIdSampler(
+            num_replicas=1, rank=0,
+            seq_lengths=seq_lengths,
+            taxon_ids=taxon_ids,
+            **sampler_kwargs)
+        global_batches = sampler._prepare_batches()
+
+        # 2) Shard
+        per_shard = math.ceil(len(global_batches) / world_size)
+        for rank in range(world_size):
+            start = rank * per_shard
+            end   = min(start + per_shard, len(global_batches))
+            shard = global_batches[start:end]
+            with open(f"{out_dir}/batches_shard_{rank}.pkl", "wb") as f:
+                pickle.dump(shard, f)
+
+        # 3) Write metadata
+        with open(f"{out_dir}/metadata.json", "w") as f:
+            json.dump({
+                "total_batches":   len(global_batches),
+                "world_size":      world_size,
+                "sampler_params":  sampler_kwargs,
+            }, f, indent=2)

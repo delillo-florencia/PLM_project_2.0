@@ -69,6 +69,8 @@ else:
 train_sampler_params["num_replicas"] = WORLD_SIZE
 train_sampler_params["rank"] = RANK
 val_sampler_params = train_sampler_params.copy()
+train_sampler_params["precomputed_batches_dir"] = os.path.join(cfg["precomputed_batches_dir"], "train")
+val_sampler_params["precomputed_batches_dir"] = os.path.join(cfg["precomputed_batches_dir"], "val")
 val_sampler_params["max_batch_num"] = val_batch_num
     
 # create output files
