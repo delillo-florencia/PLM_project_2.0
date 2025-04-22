@@ -66,7 +66,7 @@ class DynamicTaxonIdSampler(Sampler):
         return self.__per_gpu_batch_num
 
     def __iter__(self):
-        if self.precomputed_batches is not None and self.num_shards > 1:
+        if self.precomputed_batches is not None:
             for batch in self.__batches:
                 yield batch
         else:
