@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=plm_train
 #SBATCH --partition=g2
-#SBATCH --nodes=20                   
+#SBATCH --nodes=80                   
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
@@ -17,6 +17,8 @@ MASTER_PORT=29540
 read -r head_node <<< "$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n1)"
 # 2) Extract the first external IP from that node
 read -r head_ip <<< "$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname -I | awk '{print $1}')"
+
+export CUDA_LAUNCH_BLOCKING=1
 
 # Launch
 srun torchrun \
