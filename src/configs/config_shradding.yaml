@@ -1,0 +1,19 @@
+##define input data sources
+train_csv_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.csv"
+train_hash_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_train.hash"
+val_csv_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.csv"
+val_hash_file: "/home/developer/workspace/PLM_project_2.0/data/cluster_uniref100/cluster_uniref100_q2-3_val.hash"
+
+# sanity check for applied hashing
+hashing_params:
+  train_size_ratio: 0.7
+  val_size_ratio: 0.2
+  test_size_ratio: 0.1
+
+# dataloader parameters
+train_sampler_params:
+  max_batch_tokens: 2048 # TESTED ON CLOUD DO NOT CHANGE
+  drop_last: true
+  shuffle: false # all samples before bucketing
+  shuffle_batch_order: true # batch order after bucketing
+  max_batch_num: 457522  # 1/256 of the whole uniref (max number of batches across all GPUs)

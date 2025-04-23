@@ -42,6 +42,7 @@ torch.cuda.set_device(LOCAL_RANK)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str, required=True, help="Path to YAML config")
+parser.add_argument("--num_workers", type=int, default=0, help="Dataloader num_workers per process.")
 parser.add_argument("--disable_progress_bar", action="store_true", help="Disable progress bar")
 args = parser.parse_args()
 
@@ -100,13 +101,13 @@ else:
 
 # turn on tensorboard
 tb_logger = TensorBoardLogger(output_dir, name=run_name, version=version, default_hp_metric=False)
-
+ 
 # get proper output dir and store hparams
 tb_logger.log_hyperparams(hyper_params)
 
 # load modules
-train_data_module = ProteinDataModule(cfg["train_csv_file"], cfg["train_hash_file"], "train", train_sampler_params, collate_fn=lambda x: x)
-val_data_module = ProteinDataModule(cfg["val_csv_file"], cfg["val_hash_file"], "val", val_sampler_params, collate_fn=lambda x: x)
+train_data_module = ProteinDataModule(cfg["train_csv_file"], cfg["train_hash_file"], "train", train_sampler_params, num_workers=args.num_workers, collate_fn=lambda x: x)
+val_data_module = ProteinDataModule(cfg["val_csv_file"], cfg["val_hash_file"], "val", val_sampler_params, num_workers=args.num_workers, collate_fn=lambda x: x)
 model_module = ProteinTrainModule(**cfg["loop_params"], **hyper_params, use_saved_reps_logs_dir=cfg["precomputed_dir"], 
                                   output_dir=output_dir_ver, use_flash=USE_FA, distillation_loss=DistillationLoss())
 

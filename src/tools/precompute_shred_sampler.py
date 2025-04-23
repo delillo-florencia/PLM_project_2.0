@@ -16,7 +16,7 @@ def precompute_split(cfg, split, world_size, root_out):
     sampler_cfg = cfg["train_sampler_params"]
 
     if sampler_cfg["max_batch_num"] != -1 and split == "val":
-        hash_params = sampler_cfg["hashing_params"]
+        hash_params = cfg["hashing_params"]
         val_batch_num = int(sampler_cfg["max_batch_num"] * hash_params["val_size_ratio"] / hash_params["train_size_ratio"])
         sampler_cfg["max_batch_num"] = val_batch_num
 
@@ -29,6 +29,7 @@ def precompute_split(cfg, split, world_size, root_out):
         hash_file      = hash_file,
         id_str         = split,
         sampler_params = sampler_cfg,
+        num_workers=8,
         collate_fn     = lambda x: x
     )
     dm.setup()
@@ -61,9 +62,6 @@ def main():
     args = p.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
-
-    if "precomputed_batches_dir" not in cfg:
-        sys.exit("ERROR: please set `precomputed_batches_dir` in your YAML")
 
     # Do train and validation
     for split in ("train", "val"):

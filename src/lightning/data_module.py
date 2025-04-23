@@ -5,7 +5,7 @@ from data.sampler import DynamicTaxonIdSampler
 import os
 
 class ProteinDataModule(pl.LightningDataModule):
-    def __init__(self, csv_file, hash_file, id_str, sampler_params, collate_fn=lambda x: x):
+    def __init__(self, csv_file, hash_file, id_str, sampler_params, num_workers, collate_fn=lambda x: x):
         """
         :param csv_file: Path to CSV file.
         :param hash_file: Path to pre-hashed data (created via create_hashed_data).
@@ -17,6 +17,7 @@ class ProteinDataModule(pl.LightningDataModule):
         self.hash_file = hash_file
         self.id = id_str
         self.sampler_params = sampler_params
+        self.num_workers = num_workers
         self.collate_fn = collate_fn
 
     def setup(self, stage=None):
@@ -32,6 +33,6 @@ class ProteinDataModule(pl.LightningDataModule):
         )
         sampler.dataset = self.dataset
         sampler.set_epoch(0)  # this is here only to initialize, epochs ar eupdated with a callback, see training :)
-        return DataLoader(self.dataset, batch_sampler=sampler, collate_fn=self.collate_fn, shuffle=False, num_workers=0)
+        return DataLoader(self.dataset, batch_sampler=sampler, collate_fn=self.collate_fn, shuffle=False, num_workers=self.num_workers)
 
 

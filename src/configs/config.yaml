@@ -10,19 +10,19 @@ val_hash_file: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/c
 
 # used for offline training - point to the dir with version ending!
 precomputed_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/test/version_0" 
-precomputed_batches_dir: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/shred20_cluster_uniref100_q2-3"
+precomputed_batches_dir: "/home/dtuteam/workspace/PLM_project_2.0/data/cluster_uniref100/shred80_cluster_uniref100_1-256/"
 
 # define run name and master output dir!
 output_dir: "/home/dtuteam/workspace/PLM_project_2.0/outputs/"
-run_name: "cloud_r4"
+run_name: "cloud_r5"
 
 # hyper params
 hyper_params:
-  learning_rate: 0.001819
+  learning_rate: 0.0001819
 
 # training parameters
 loop_params:
-  student_model_param: "150M" # student model
+  student_model_param: "650M" # student model
   teacher_model_param: "3B" # teacher model
   save_masked_sequences: false # should tensor masking of seqeunces be saved
   log_batch_shape: false # extra per batch logging
@@ -55,4 +55,4 @@ checkpoint_params:
 # extra trainer settings
 # enything here is passed to the trainer
 trainer_params:
-  max_epochs: 250 # set epoch number
+  max_epochs: 300 # set epoch number

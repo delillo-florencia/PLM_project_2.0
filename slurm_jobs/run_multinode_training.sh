@@ -28,4 +28,5 @@ srun torchrun \
      --rdzv_conf timeout=3600,heartbeat=1800 \
      /home/dtuteam/workspace/PLM_project_2.0/src/training/training_loop.py \
           --config /home/dtuteam/workspace/PLM_project_2.0/src/configs/config.yaml \
+          --num_workers=3
      
